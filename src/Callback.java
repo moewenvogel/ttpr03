@@ -73,6 +73,7 @@ public class Callback implements NotifyCallback {
 	@Override
 	public void broadcast(ID source, ID target, Boolean hit) {
 		// TODO Auto-generated method stub		
+		System.out.println(source+" shot at "+target+" and hit: "+hit);
 	}
 
 }
