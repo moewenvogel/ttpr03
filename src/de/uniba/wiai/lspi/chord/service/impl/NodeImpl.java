@@ -427,6 +427,8 @@ public final class NodeImpl extends Node {
 	}
 	
 	// TODO: implement this function in TTP
+	/* 
+	 * */
 	@Override
 	public final void broadcast(Broadcast info) throws CommunicationException {
 		if (this.logger.isEnabledFor(DEBUG)) {

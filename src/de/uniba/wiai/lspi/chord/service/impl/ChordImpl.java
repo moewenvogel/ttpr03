@@ -1113,9 +1113,17 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	
 	// TODO: implement this function in TTP 
 	//send broadcast to all nodes in finger table
+	/*
+	 * generische Methode -> berechne broadcast message (klasse) und 
+	 * gebe weiter an  NodeImpl
+	 * 
+	 * 1) set range 
+	 * 2) 
+	 * */
 	@Override
 	public void broadcast (ID target, Boolean hit) {
 		this.logger.debug("App called broadcast");
+		
 		
 	}
 	
