@@ -438,7 +438,7 @@ public final class NodeImpl extends Node {
 	 * 		Die Max Range die schon in der Broadcast Message steht
 	 * 		) 
 	 * 4) sende nachricht mit neuer Range Knoten der Fingertable
-	 * 5) abbruch wenn die eingangsrange Ÿberschritten wird. 
+	 * 5) abbruch wenn die eingangsrange ï¿½berschritten wird. 
 	 * 			-> weiter wird nicht gesendet.
 	 * */
 	@Override
@@ -462,7 +462,7 @@ public final class NodeImpl extends Node {
 			else { 
 				Broadcast message=new Broadcast(maxRange, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
 				currentNode.broadcast(message);
-				break; //abbruch, da eingangsrange nicht Ÿberschritten werden darf
+				break; //abbruch, da eingangsrange nicht Ã¼berschritten werden darf
 			} 
 			
 			
