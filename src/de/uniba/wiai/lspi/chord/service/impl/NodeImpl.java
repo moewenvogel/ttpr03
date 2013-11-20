@@ -30,6 +30,8 @@ package de.uniba.wiai.lspi.chord.service.impl;
 import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.DEBUG;
 import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -427,14 +429,45 @@ public final class NodeImpl extends Node {
 	}
 	
 	// TODO: implement this function in TTP
-	/* 
+	/*Der Plan:
+	 * 1) Diese Methode wird aufgerufen, wenn ein Broadcast eingeht
+	 * 2) Die Fingertable wird sortiert
+	 * 3) neue Range pro Knoten in der Fingertable:
+	 * 		min( jeweils der nachfolgende Knoten in der eigenen Fingertable
+	 * 		ODER
+	 * 		Die Max Range die schon in der Broadcast Message steht
+	 * 		) 
+	 * 4) sende nachricht mit neuer Range Knoten der Fingertable
+	 * 5) abbruch wenn die eingangsrange Ÿberschritten wird. 
+	 * 			-> weiter wird nicht gesendet.
 	 * */
 	@Override
 	public final void broadcast(Broadcast info) throws CommunicationException {
 		if (this.logger.isEnabledFor(DEBUG)) {
 			this.logger.debug(" Send broadcast message");
 		}
+		List<Node> ft = impl.getFingerTable();
+		Collections.sort(ft);
+		ID maxRange=info.getRange();
 		
+		
+		for(int i=0; i<ft.size();i++){
+			Node currentNode = ft.get(i);
+			Node nextNode = ft.get(i+1);
+			if(nextNode.getNodeID().compareTo(maxRange) < 0 ){
+				ID newRange=nextNode.getNodeID();
+				Broadcast message=new Broadcast(newRange, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
+				currentNode.broadcast(message);
+			}
+			else { 
+				Broadcast message=new Broadcast(maxRange, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
+				currentNode.broadcast(message);
+				break; //abbruch, da eingangsrange nicht Ÿberschritten werden darf
+			} 
+			
+			
+		}
+
 		// finally inform application
 		if (this.notifyCallback != null) {
 			this.notifyCallback.broadcast(info.getSource(), info.getTarget(), info.getHit());

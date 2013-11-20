@@ -33,6 +33,7 @@ import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -1112,20 +1113,25 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	}
 	
 	// TODO: implement this function in TTP 
-	//send broadcast to all nodes in finger table
-	/*
-	 * generische Methode -> berechne broadcast message (klasse) und 
-	 * gebe weiter an  NodeImpl
-	 * 
-	 * 1) set range 
-	 * 2) 
-	 * */
+
 	@Override
 	public void broadcast (ID target, Boolean hit) {
 		this.logger.debug("App called broadcast");
 		
-		
+		// komplett Broadcast, daher:
+		// -> neuer Range geht bis zur ID des Predecessors
+		ID newRange=getPredecessorID();
+		int trn=(int)(Math.random()*1000);
+		Broadcast info=new Broadcast(newRange, localID, target, trn, hit);
+		try {
+			localNode.broadcast(info);
+		} catch (CommunicationException e) {
+			e.printStackTrace();
+		}
 	}
+	
+
+
 	
 	public void setCallback (NotifyCallback callback) {
 		if (callback == null) {
