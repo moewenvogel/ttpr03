@@ -30,6 +30,8 @@ package de.uniba.wiai.lspi.chord.service.impl;
 import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.DEBUG;
 import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,6 +50,7 @@ import de.uniba.wiai.lspi.chord.com.Node;
 import de.uniba.wiai.lspi.chord.com.RefsAndEntries;
 import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
+import de.uniba.wiai.lspi.chord.service.Chord;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
 import de.uniba.wiai.lspi.util.logging.Logger;
 
@@ -428,6 +431,14 @@ public final class NodeImpl extends Node {
 		return this.asyncExecutor;
 	}
 	
+	
+	
+	private BigInteger getDistance( ID from, ID to){
+		BigInteger adressSpace=(new BigDecimal(Math.pow(2, 160))).toBigInteger();
+		BigInteger distance=(adressSpace.subtract(from.toBigInteger()).add(to.toBigInteger())).mod(adressSpace);
+		return(distance);
+	}
+	
 	// TODO: implement this function in TTP
 	/*Der Plan:
 	 * 1) Diese Methode wird aufgerufen, wenn ein Broadcast eingeht
@@ -441,6 +452,7 @@ public final class NodeImpl extends Node {
 	 * 5) abbruch wenn die eingangsrange �berschritten wird. 
 	 * 			-> weiter wird nicht gesendet.
 	 * */
+	
 	@Override
 	public final void broadcast(Broadcast info) throws CommunicationException {
 		if (this.logger.isEnabledFor(DEBUG)) {
@@ -449,12 +461,20 @@ public final class NodeImpl extends Node {
 		List<Node> ft = impl.getFingerTable();
 		Collections.sort(ft);
 		ID maxRange=info.getRange();
+		if(info.getTransaction()> impl.last_transaction){
+			impl.last_transaction=info.getTransaction();
+		}
 		
+		BigInteger maxDistance=getDistance(getNodeID(), maxRange);
 		
 		for(int i=0; i<ft.size();i++){
 			Node currentNode = ft.get(i);
 			Node nextNode = ft.get(i+1);
-			if(nextNode.getNodeID().compareTo(maxRange) < 0 ){
+			
+			BigInteger nextNodeDistance=getDistance(getNodeID(), nextNode.getNodeID());
+			
+			
+			if(maxDistance.compareTo(nextNodeDistance)>0 ){
 				ID newRange=nextNode.getNodeID();
 				Broadcast message=new Broadcast(newRange, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
 				currentNode.broadcast(message);

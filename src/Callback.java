@@ -1,23 +1,23 @@
-import java.net.MalformedURLException;
+import javax.annotation.processing.RoundEnvironment;
 
-import de.uniba.wiai.lspi.chord.com.Broadcast;
-import de.uniba.wiai.lspi.chord.com.Node;
 import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
-import de.uniba.wiai.lspi.chord.service.Chord;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
 import de.uniba.wiai.lspi.chord.service.PropertiesLoader;
-import de.uniba.wiai.lspi.chord.service.ServiceException;
 import de.uniba.wiai.lspi.chord.service.impl.ChordImpl;
+import de.uniba.wiai.lspi.util.logging.Logger;
 public class Callback implements NotifyCallback {
 	
 	ChordImpl chord;
-	
+	Logger logger;
 	
 	private Callback() throws Exception {
 		PropertiesLoader.loadPropertyFile();
 		chord=new ChordImpl();
 		chord.setCallback(this);
+		
+		this.logger = Logger.getLogger(ChordImpl.class.getName()
+				+ ".unidentified");
 		
 		String protocol = URL.KNOWN_PROTOCOLS.get(URL.SOCKET_PROTOCOL ) ;
 		
@@ -41,7 +41,15 @@ public class Callback implements NotifyCallback {
 	public static void main(String[] args) throws Exception {
 		
 		Callback cb=new Callback();
-			
+		
+		//calculate the number of players:
+		int ftSize=cb.chord.getFingerTable().size();
+		int players=(int) Math.pow(2, 160)/ftSize;
+		cb.logger.info("Recognised "+players+" players");
+		
+		
+		
+		
 		//TODO: GAME!!!!
 		
 			

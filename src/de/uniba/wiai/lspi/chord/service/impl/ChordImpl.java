@@ -1112,17 +1112,17 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 		return ChordRemoveFuture.create(this.asyncExecutor, this, key, entry);
 	}
 	
-	// TODO: implement this function in TTP 
-
+	int last_transaction=0;
 	@Override
 	public void broadcast (ID target, Boolean hit) {
 		this.logger.debug("App called broadcast");
 		
 		// komplett Broadcast, daher:
-		// -> neuer Range geht bis zur ID des Predecessors
-		ID newRange=getPredecessorID();
-		int trn=(int)(Math.random()*1000);
-		Broadcast info=new Broadcast(newRange, localID, target, trn, hit);
+		// -> neuer Range geht bis zu mir selber
+		ID newRange=getID();
+		int next_transaction=last_transaction+1;
+		last_transaction=next_transaction;
+		Broadcast info=new Broadcast(newRange, localID, target, next_transaction , hit);
 		try {
 			localNode.broadcast(info);
 		} catch (CommunicationException e) {
