@@ -31,8 +31,10 @@ import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.DEBUG;
 import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -1129,8 +1131,26 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 			e.printStackTrace();
 		}
 	}
+	public Node getSuccessor(){
+		return(localNode.findSuccessor(getID()));
+	}
 	
-
+	public Map<Node, Node> getRing(){
+		
+		Map<Node,Node> ring=new HashMap<Node,Node>();
+		
+		Node preDec=localNode;
+		Node addressRange=getSuccessor();
+		ring.put(preDec, addressRange);
+		do{
+			preDec=addressRange;
+			addressRange=localNode.findSuccessor(addressRange.getNodeID());
+			ring.put(preDec, addressRange);
+			
+		}while(addressRange.getNodeID()!=getID());
+		
+		return(ring);
+	}
 
 	
 	public void setCallback (NotifyCallback callback) {

@@ -433,7 +433,7 @@ public final class NodeImpl extends Node {
 	
 	
 	
-	private BigInteger getDistance( ID from, ID to){
+	public static BigInteger getDistance( ID from, ID to){
 		BigInteger adressSpace=(new BigDecimal(Math.pow(2, 160))).toBigInteger();
 		BigInteger distance=(adressSpace.subtract(from.toBigInteger()).add(to.toBigInteger())).mod(adressSpace);
 		return(distance);
