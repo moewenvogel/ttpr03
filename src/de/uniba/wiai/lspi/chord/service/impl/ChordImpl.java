@@ -1162,7 +1162,7 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 		return(ring);
 	}
 
-	
+	@Override
 	public void setCallback (NotifyCallback callback) {
 		if (callback == null) {
 			NullPointerException e = new NullPointerException(

@@ -1,0 +1,8 @@
+Java nervt mal wieder.
+Aus diesem Grund eine kleine Anleitung wie man Open Chord mit RTC zum laufen kriegt.
+
+1) Kompiliere in Eclipse oder so
+2) gehe in den Projekt bin ordner mit einem Terminal
+3) Gib ein: 
+	rmic de.uniba.wiai.lspi.chord.com.rmi.RMIEndpoint
+

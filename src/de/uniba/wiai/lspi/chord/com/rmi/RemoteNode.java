@@ -28,6 +28,7 @@ package de.uniba.wiai.lspi.chord.com.rmi;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.rmi.server.RemoteStub;
 import java.util.List;
 import java.util.Set;
 
@@ -41,9 +42,11 @@ import de.uniba.wiai.lspi.chord.data.ID;
  * @author sven
  * @version 1.0.5
  */
-public interface RemoteNode extends Remote {
+public interface RemoteNode extends Remote
+ {
 
-	/**
+	/**remoteRef;
+			
 	 * 
 	 * @param key
 	 * @return
@@ -147,3 +150,5 @@ public interface RemoteNode extends Remote {
 	RemoteException;
 	
 }
+
+

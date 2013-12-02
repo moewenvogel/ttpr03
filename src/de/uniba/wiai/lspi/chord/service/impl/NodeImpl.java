@@ -32,6 +32,7 @@ import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -439,6 +440,9 @@ public final class NodeImpl extends Node {
 		return(distance);
 	}
 	
+	
+	
+	
 	// TODO: implement this function in TTP
 	/*Der Plan:
 	 * 1) Diese Methode wird aufgerufen, wenn ein Broadcast eingeht
@@ -454,58 +458,102 @@ public final class NodeImpl extends Node {
 	 * */
 	
 	@Override
-	public final void broadcast(Broadcast info) throws CommunicationException {
-		if (this.logger.isEnabledFor(DEBUG)) {
-			this.logger.debug(" Send broadcast message");
-		}
-		List<Node> ft = impl.getFingerTable();
+	public final void broadcast(Broadcast info1) throws CommunicationException {
+		final Broadcast info=info1;
+		  // asynchronos send broadcast message to current node
+	
+					
+	
+	/*	Set<Node> fts = new HashSet<Node>(impl.getFingerTable());
+		List<Node> ft=new ArrayList<Node>();
+		ft.addAll(fts);
 		Collections.sort(ft);
+*/
+		List<Node> ft=impl.getFingerTable();
+		
+		System.out.println("size of fingertable: "+ft.size());
+		
 		ID maxRange=info.getRange();
 		if(info.getTransaction()> impl.last_transaction){
 			impl.last_transaction=info.getTransaction();
 		}
 
 		BigInteger maxDistance=getDistance(getNodeID(), maxRange);
-		
-		for(int i=0; i<ft.size()-1;i++){
-		final Node currentNode = ft.get(i);
-			Node nextNode = ft.get(i+1);
-	
-			BigInteger nextNodeDistance=getDistance(getNodeID(), nextNode.getNodeID());
-		//	System.out.println("next node distance: "+nextNodeDistance+" maxDistance: "+ maxDistance);
-		
-			ID next_limit=maxRange;
-			if(maxDistance.compareTo(nextNodeDistance)>=0){
-		//		System.out.println("setting limit to next node");
-				next_limit=nextNode.getNodeID();
+		boolean lastMessage=false;
+		for(int i=0; i<ft.size();i++){
+			final Node currentNode = ft.get(i);
+			
+			//check if Maxrange is before the first finger table entry
+			// this is the node behind max range
+			if(maxDistance.compareTo(getDistance(getNodeID(), currentNode.getNodeID()))<0){
+				break;
 			}
 			
-		    final Broadcast message=new Broadcast(next_limit, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
-		    
-		    if(maxDistance.compareTo(nextNodeDistance)<=0 ){
-		//		System.out.println("Breaking loop");
-				break; //abbruch, da eingangsrange nicht überschritten werden darf
+			// define next node
+			Node nextNode =null;
+			// if we have a next one in list
+			if( i < ft.size()-1){
+				nextNode = ft.get(i+1);
+
+			}else{
+				nextNode=impl.findSuccessor(maxRange);
 			}
 
-			this.asyncExecutor.execute(new Runnable() {
+			BigInteger nextNodeDistance=getDistance(getNodeID(), nextNode.getNodeID());
+			
+			
+			ID next_limit = null;
+			// if maxdistance is greater than next node distancem we take next node as next limit for current node
+			if(maxDistance.compareTo(nextNodeDistance)>0){
+				next_limit=nextNode.getNodeID();
+			}			
+			// else current node get next limit of max range
+			else{
+				next_limit=maxRange;	
+				lastMessage=true;
+			}
+			
+			// message with next limit
+		    final Broadcast message=new Broadcast(next_limit, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
+	
+		    
+		    (new Thread(){
+		    	public void run(){
+		    	try { 
+					currentNode.broadcast(message);
+				} catch (CommunicationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		    	}
+		    }).start();
+			/*this.asyncExecutor.execute(new Runnable() {
 				public void run() {
 					try {
-						currentNode.broadcast(message);
+		  						currentNode.broadcast(message);
 					} catch (CommunicationException e) {
 						// do nothing
 					}
 				}
-			});
+			});*/
+			
+		    if(lastMessage){
+		//		System.out.println("Breaking loop");
+		    	impl.printFingerTable();
+				break; //abbruch, da eingangsrange nicht überschritten werden darf
+				
+			} 
 			
 		    
-			
+
 		}
 		
-
+			
 		// finally inform application
 		if (this.notifyCallback != null) {
 			this.notifyCallback.broadcast(info.getSource(), info.getTarget(), info.getHit());
 		}
 	}
+
 
 }
