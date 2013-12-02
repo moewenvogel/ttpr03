@@ -31,6 +31,7 @@ import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.DEBUG;
 import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1117,11 +1118,11 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	int last_transaction=0;
 	@Override
 	public void broadcast (ID target, Boolean hit) {
-		this.logger.debug("App called broadcast");
+		
 		
 		// komplett Broadcast, daher:
 		// -> neuer Range geht bis zu mir selber
-		ID newRange=getID();
+		ID newRange=ID.valueOf(getID().toBigInteger().subtract(new BigInteger("1")));
 		int next_transaction=last_transaction+1;
 		last_transaction=next_transaction;
 		Broadcast info=new Broadcast(newRange, localID, target, next_transaction , hit);
@@ -1131,23 +1132,32 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 			e.printStackTrace();
 		}
 	}
-	public Node getSuccessor(){
-		return(localNode.findSuccessor(getID()));
-	}
-	
-	public Map<Node, Node> getRing(){
+
+	/*
+	 * returns the ring with the mapping:
+	 * responsible node -> max range;
+	 * */
+	private BigInteger ADDRESS_AMOUNT=new BigInteger(Integer.toString((int)Math.pow(2, 160)));
+	public Map<Node, ID> getRing(){
 		
-		Map<Node,Node> ring=new HashMap<Node,Node>();
+		Map<Node,ID> ring=new HashMap<Node,ID>();
 		
-		Node preDec=localNode;
-		Node addressRange=getSuccessor();
-		ring.put(preDec, addressRange);
+		Node cur_node=localNode;
+		ID addressRange=getPredecessorID();
+		
+		ring.put(cur_node, addressRange);
 		do{
-			preDec=addressRange;
-			addressRange=localNode.findSuccessor(addressRange.getNodeID());
-			ring.put(preDec, addressRange);
+			//check if current node is zero -> mod break
+			if(cur_node.getNodeID().toBigInteger()!=BigInteger.ZERO){
+				addressRange=ID.valueOf(cur_node.getNodeID().toBigInteger().subtract(new BigInteger("1")));
+			} else 
+			{
+				addressRange=ID.valueOf(ADDRESS_AMOUNT.subtract(new BigInteger("1")));
+			}
+			cur_node=findSuccessor(addressRange);
+			ring.put(cur_node, addressRange);
 			
-		}while(addressRange.getNodeID()!=getID());
+		}while(addressRange!= ID.valueOf((getID().toBigInteger().add(ADDRESS_AMOUNT).subtract(new BigInteger("1"))).mod(ADDRESS_AMOUNT)));
 		
 		return(ring);
 	}

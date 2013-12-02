@@ -449,7 +449,7 @@ public final class NodeImpl extends Node {
 	 * 		Die Max Range die schon in der Broadcast Message steht
 	 * 		) 
 	 * 4) sende nachricht mit neuer Range Knoten der Fingertable
-	 * 5) abbruch wenn die eingangsrange �berschritten wird. 
+	 * 5) abbruch wenn die eingangsrange ueberschritten wird. 
 	 * 			-> weiter wird nicht gesendet.
 	 * */
 	
@@ -464,29 +464,43 @@ public final class NodeImpl extends Node {
 		if(info.getTransaction()> impl.last_transaction){
 			impl.last_transaction=info.getTransaction();
 		}
-		
+
 		BigInteger maxDistance=getDistance(getNodeID(), maxRange);
 		
-		for(int i=0; i<ft.size();i++){
-			Node currentNode = ft.get(i);
+		for(int i=0; i<ft.size()-1;i++){
+		final Node currentNode = ft.get(i);
 			Node nextNode = ft.get(i+1);
-			
+	
 			BigInteger nextNodeDistance=getDistance(getNodeID(), nextNode.getNodeID());
-			
-			
-			if(maxDistance.compareTo(nextNodeDistance)>0 ){
-				ID newRange=nextNode.getNodeID();
-				Broadcast message=new Broadcast(newRange, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
-				currentNode.broadcast(message);
+		//	System.out.println("next node distance: "+nextNodeDistance+" maxDistance: "+ maxDistance);
+		
+			ID next_limit=maxRange;
+			if(maxDistance.compareTo(nextNodeDistance)>=0){
+		//		System.out.println("setting limit to next node");
+				next_limit=nextNode.getNodeID();
 			}
-			else { 
-				Broadcast message=new Broadcast(maxRange, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
-				currentNode.broadcast(message);
-				break; //abbruch, da eingangsrange nicht überschritten werden darf
-			} 
 			
+		    final Broadcast message=new Broadcast(next_limit, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
+		    
+		    if(maxDistance.compareTo(nextNodeDistance)<=0 ){
+		//		System.out.println("Breaking loop");
+				break; //abbruch, da eingangsrange nicht überschritten werden darf
+			}
+
+			this.asyncExecutor.execute(new Runnable() {
+				public void run() {
+					try {
+						currentNode.broadcast(message);
+					} catch (CommunicationException e) {
+						// do nothing
+					}
+				}
+			});
+			
+		    
 			
 		}
+		
 
 		// finally inform application
 		if (this.notifyCallback != null) {

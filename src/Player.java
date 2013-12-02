@@ -23,29 +23,24 @@ public class Player  implements Comparable<Player>{
 		this.node=node;
 		id=node.getNodeID();
 		url=node.getNodeURL();
-		this.maxRespID=ID.valueOf(
-					(maxRespID.toBigInteger()
-					.add(Callback.ADDRESS_AMOUNT)
-					.subtract(new BigInteger("1"))
-				.mod(Callback.ADDRESS_AMOUNT))
-				);
+		this.maxRespID=maxRespID;
 
 		
 	}
 
 	
 	public void initializeField(boolean local){
-		for(int i=0; i<Callback.I; i++){
+		for(int i=0; i<Game.I; i++){
 			field.put(i, false);
 		}
 		
 		//fill field only with ships if it is my node
 		if(local){
 			
-			for(int i=0; i<Callback.S; i++){
-				int random=(int)Math.random()*Callback.I;
+			for(int i=0; i<Game.S; i++){
+				int random=(int)Math.random()*Game.I;
 				while(field.get(random)==true){
-					random=(int)Math.random()*Callback.I;
+					random=(int)Math.random()*Game.I;
 				}
 				field.put(random, true);
 			}
@@ -78,12 +73,12 @@ public class Player  implements Comparable<Player>{
 	//returns true if all ships have died
 	public boolean sunkShip(ID id){
 		sunkenShips.add(id);
-		return(sunkenShips.size()==Callback.S? true:false);
+		return(sunkenShips.size()==Game.S? true:false);
 	}
 	
 	public int getNumOfField(ID id){
 		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.id,this.maxRespID);
-		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Callback.I)));
+		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
 		int r=Integer.parseInt(id.toBigInteger().divide(oneFieldSize).toString());
 		return r;
 	}
@@ -124,7 +119,7 @@ public class Player  implements Comparable<Player>{
 	
 	public String getStatusString(){
 		String r=this.toString();
-		r=r+"\n\t[alive: "+(Callback.S-this.sunkenShips.size())+"]\n\t[unknown water left: "+(Callback.I-this.sunkenShips.size()-this.getAllWater().size());
+		r=r+"\n\t[alive: "+(Game.S-this.sunkenShips.size())+"]\n\t[unknown water left: "+(Game.I-this.sunkenShips.size()-this.getAllWater().size());
 		
 		return r;
 	}
