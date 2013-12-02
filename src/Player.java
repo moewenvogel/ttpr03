@@ -88,7 +88,7 @@ public class Player  implements Comparable<Player>{
 	 * */
 	@Override
 	public int compareTo(Player p) {
-		return(Integer.compare(this.sunkenShips.size(), p.sunkenShips.size()));
+		return(Integer.valueOf(this.sunkenShips.size()).compareTo(p.sunkenShips.size()));
 	}
 	
 	
