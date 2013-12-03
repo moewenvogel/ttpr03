@@ -1124,13 +1124,14 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 		// -> neuer Range geht bis zu mir selber
 		ID newRange=ID.valueOf(getID().toBigInteger().subtract(new BigInteger("1")));
 		int next_transaction=last_transaction+1;
-		last_transaction=next_transaction;
+	
 		Broadcast info=new Broadcast(newRange, localID, target, next_transaction , hit);
 		try {
 			localNode.broadcast(info);
 		} catch (CommunicationException e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	/*

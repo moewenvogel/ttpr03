@@ -40,7 +40,7 @@ public class Game implements NotifyCallback {
 		this.logger = Logger.getLogger(ChordImpl.class.getName()
 				+ ".unidentified");
 
-		String protocol = URL.KNOWN_PROTOCOLS.get(URL.RMI_PROTOCOL);
+		String protocol = URL.KNOWN_PROTOCOLS.get(URL.LOCAL_PROTOCOL);
 		URL localUrl = new URL(protocol + "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
 	//	URL bootstrapUrl = new URL(protocol + "://127.0.0.1:" + bootstrapPort
 		URL bootstrapUrl = new URL(protocol + "://127.0.0.1/");
@@ -52,8 +52,9 @@ public class Game implements NotifyCallback {
 			chord.join(localUrl,bootstrapUrl);
 
 		}
-
+		
 		System.out.println("I am: " + this.getString());
+		System.out.println(chord.printFingerTable());
 	}
 
 	/*
@@ -81,14 +82,20 @@ public class Game implements NotifyCallback {
 		for (int i = 1; i < testAmount; i++) {
 			Game cb = new Game(((int)(Math.random()*255+2000)) , false);
 			cbs.add(cb);
-			//System.out.println(cbs.get(i).chord.getFingerTable());
 
 		}
 
 		Thread.sleep(5000);
 	//	System.out.println("sender: " + cbs.get(0).getString());
 
-		cbs.get(0).chord.broadcast(cbs.get(0).chord.getID(), true);
+		
+		for (int i = 8; i < testAmount; i++) {
+			cbs.get(i).chord.broadcast(cbs.get(i).chord.getID(), true);
+			Thread.sleep(1000);
+			System.out.println("");
+		}
+		
+		//cbs.get(0).chord.broadcast(cbs.get(0).chord.getID(), true);
 		
 	/*	while(true){
 			if(starter){

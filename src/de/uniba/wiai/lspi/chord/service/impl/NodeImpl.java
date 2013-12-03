@@ -471,13 +471,12 @@ public final class NodeImpl extends Node {
 */
 		List<Node> ft=impl.getFingerTable();
 		
-		System.out.println("size of fingertable: "+ft.size());
-		
 		ID maxRange=info.getRange();
-		if(info.getTransaction()> impl.last_transaction){
+		if(info.getTransaction() > impl.last_transaction){
 			impl.last_transaction=info.getTransaction();
+		}else{
+			return;
 		}
-
 		BigInteger maxDistance=getDistance(getNodeID(), maxRange);
 		boolean lastMessage=false;
 		for(int i=0; i<ft.size();i++){
@@ -516,17 +515,23 @@ public final class NodeImpl extends Node {
 			// message with next limit
 		    final Broadcast message=new Broadcast(next_limit, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
 	
-		    
-		    (new Thread(){
+	
+			
+			  (new Thread(){
 		    	public void run(){
 		    	try { 
-					currentNode.broadcast(message);
+		    		
+					currentNode.broadcast(message); 
+					
+					
 				} catch (CommunicationException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-		    	}
+				}}
 		    }).start();
+			
+			  
+
 			/*this.asyncExecutor.execute(new Runnable() {
 				public void run() {
 					try {
@@ -539,7 +544,7 @@ public final class NodeImpl extends Node {
 			
 		    if(lastMessage){
 		//		System.out.println("Breaking loop");
-		    	impl.printFingerTable();
+		    	
 				break; //abbruch, da eingangsrange nicht überschritten werden darf
 				
 			} 
