@@ -32,6 +32,7 @@ import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -776,7 +777,7 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 			responsibleNode = findSuccessor(id);
 
 			// invoke retrieveEntry method
-			try {
+			try { 
 				result = responsibleNode.retrieveEntries(id);
 				// cause while loop to end.
 
@@ -923,7 +924,7 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 				+ (this.localID == null ? "null" : this.localID.toString())
 				+ ", url = "
 				+ (this.localURL == null ? "null" : this.localURL.toString()
-						+ "\n");
+						+ "\n"); 
 	}
 
 	/**

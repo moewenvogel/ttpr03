@@ -436,7 +436,7 @@ public final class NodeImpl extends Node {
 	
 	public static BigInteger getDistance( ID from, ID to){
 		BigInteger adressSpace=(new BigDecimal(Math.pow(2, 160))).toBigInteger();
-		BigInteger distance=(adressSpace.subtract(from.toBigInteger()).add(to.toBigInteger())).mod(adressSpace);
+		BigInteger distance=((adressSpace.subtract(from.toBigInteger())).add(to.toBigInteger())).mod(adressSpace);
 		return(distance);
 	}
 	
@@ -461,27 +461,25 @@ public final class NodeImpl extends Node {
 	public final void broadcast(Broadcast info1) throws CommunicationException {
 		final Broadcast info=info1;
 		  // asynchronos send broadcast message to current node
-	
-					
-	
-	/*	Set<Node> fts = new HashSet<Node>(impl.getFingerTable());
-		List<Node> ft=new ArrayList<Node>();
-		ft.addAll(fts);
-		Collections.sort(ft);
-*/
+
 		List<Node> ft=impl.getFingerTable();
+		Collections.sort(ft);
 		
 		ID maxRange=info.getRange();
 		if(info.getTransaction() > impl.last_transaction){
 			impl.last_transaction=info.getTransaction();
 		}else{
+			System.out.println("node: "+impl.getURL()+"local transaction number: "+impl.last_transaction+", got: "+info.getTransaction()+" , return");
 			return;
 		}
 		BigInteger maxDistance=getDistance(getNodeID(), maxRange);
-		boolean lastMessage=false;
+		boolean lastMessage=false; 
+		
+		
+		
 		for(int i=0; i<ft.size();i++){
 			final Node currentNode = ft.get(i);
-			
+
 			//check if Maxrange is before the first finger table entry
 			// this is the node behind max range
 			if(maxDistance.compareTo(getDistance(getNodeID(), currentNode.getNodeID()))<0){
@@ -514,13 +512,10 @@ public final class NodeImpl extends Node {
 			
 			// message with next limit
 		    final Broadcast message=new Broadcast(next_limit, info.getSource(), info.getTarget(),info.getTransaction(), info.getHit());
-	
-	
 			
 			  (new Thread(){
 		    	public void run(){
 		    	try { 
-		    		
 					currentNode.broadcast(message); 
 					
 					
@@ -544,12 +539,11 @@ public final class NodeImpl extends Node {
 			
 		    if(lastMessage){
 		//		System.out.println("Breaking loop");
-		    	
 				break; //abbruch, da eingangsrange nicht überschritten werden darf
 				
 			} 
 			
-		    
+
 
 		}
 		

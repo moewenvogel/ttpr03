@@ -1,5 +1,6 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +42,9 @@ public class Game implements NotifyCallback {
 				+ ".unidentified");
 
 		String protocol = URL.KNOWN_PROTOCOLS.get(URL.LOCAL_PROTOCOL);
-		URL localUrl = new URL(protocol + "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
-	//	URL bootstrapUrl = new URL(protocol + "://127.0.0.1:" + bootstrapPort
-		URL bootstrapUrl = new URL(protocol + "://127.0.0.1/");
+	//	URL localUrl = new URL(protocol + "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
+		URL localUrl = new URL(protocol + "://127.0.0.1:" + localPort+"/");
+		URL bootstrapUrl = new URL(protocol + "://127.0.0.1:2000/");
 		
 
 		if (isCreator) {
@@ -53,8 +54,6 @@ public class Game implements NotifyCallback {
 
 		}
 		
-		System.out.println("I am: " + this.getString());
-		System.out.println(chord.printFingerTable());
 	}
 
 	/*
@@ -80,7 +79,8 @@ public class Game implements NotifyCallback {
 		cbs.add(cb1);
 
 		for (int i = 1; i < testAmount; i++) {
-			Game cb = new Game(((int)(Math.random()*255+2000)) , false);
+			//Game cb = new Game(((int)(Math.random()*255+2000)) , false);
+			Game cb = new Game((2000+i) , false);
 			cbs.add(cb);
 
 		}
@@ -88,8 +88,15 @@ public class Game implements NotifyCallback {
 		Thread.sleep(5000);
 	//	System.out.println("sender: " + cbs.get(0).getString());
 
+		for (int i = 1; i < testAmount; i++) {
+			
+			cbs.get(i).printFT();
+
+		}
 		
-		for (int i = 8; i < testAmount; i++) {
+		
+		for (int i = 0; i < testAmount; i++) {
+			System.out.println("Test nr: "+i);
 			cbs.get(i).chord.broadcast(cbs.get(i).chord.getID(), true);
 			Thread.sleep(1000);
 			System.out.println("");
@@ -177,6 +184,14 @@ public class Game implements NotifyCallback {
 		 */
 
 		return (null);
+	}
+	
+	public void printFT(){
+		System.out.println("Finger table "+chord.getURL().toString());
+		List<Node> ft=chord.getFingerTable();
+		Collections.sort(ft);
+		Collections.reverse(ft);
+		System.out.println(chord.printFingerTable());
 	}
 
 	public String getString() {
