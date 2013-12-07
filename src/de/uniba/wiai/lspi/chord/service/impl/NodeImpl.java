@@ -439,7 +439,91 @@ public final class NodeImpl extends Node {
 		BigInteger distance=((adressSpace.subtract(from.toBigInteger())).add(to.toBigInteger())).mod(adressSpace);
 		return(distance);
 	}
+
 	
+	@Override
+	public final void broadcast(Broadcast info1) throws CommunicationException {
+		final Broadcast info=info1;
+		  // asynchronos send broadcast message to current node
+		List<Node> ft=impl.getFingerTable();
+		Collections.sort(ft);
+		
+		ID maxRange=info.getRange();
+		if(info.getTransaction() > impl.last_transaction){
+			impl.last_transaction=info.getTransaction();
+		}else{
+			// do not comment out, seems to be important to get the threads working withoud loosing outputs... somewhat strange.....
+			System.out.println("node: "+impl.getURL()+"local transaction number: "+impl.last_transaction+", got: "+info.getTransaction()+" , return");
+			return;
+		}
+		BigInteger maxDistance=getDistance(getNodeID(), maxRange);
+		boolean lastMessage=false; 
+		
+		BigInteger	DistanceHereMaxRange=getDistance(getNodeID(), info.getRange());
+		
+		for(int i=0; i<ft.size()-1;i++){
+			Node check_node=ft.get(i);
+			
+			BigInteger	DistanceHereFTNode=getDistance(getNodeID(), check_node.getNodeID());
+			BigInteger  DistanceHereNextEntry=getDistance(getNodeID(),ft.get(i+1).getNodeID());
+			
+			//sending to ft-node with nextnext node as max range. 
+			if(	DistanceHereFTNode.compareTo(DistanceHereMaxRange)<0
+					&&
+				DistanceHereNextEntry.compareTo(DistanceHereMaxRange)<0
+					){
+				
+				asyncSend(new Broadcast(ft.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), check_node);
+			} else if(
+				DistanceHereFTNode.compareTo(DistanceHereMaxRange)<=0
+					&&
+				DistanceHereNextEntry.compareTo(DistanceHereMaxRange)>=0
+				){
+			//sending to ft node with maxrange as range
+				asyncSend(new Broadcast(info.getRange(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), check_node);
+			} else if(
+				//max range is before the ft-node
+				DistanceHereFTNode.compareTo(DistanceHereMaxRange)>0
+					){
+		//		System.out.println("do nothing because the ft node is after the max range ");
+			}
+			else {
+		//		System.out.println("something unexpected, send nothing");
+				//asyncSend(new Broadcast(info.getRange(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), check_node);
+			}
+		}
+		
+		//send message the last entry in fingertable
+	//	BigInteger DistancetoLastNode=getDistance(getNodeID(), ft.get(ft.size()-1).getNodeID());
+	//	if(DistancetoLastNode.compareTo(DistanceHereMaxRange)>=0){
+		
+			asyncSend(new Broadcast(info.getRange(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), ft.get(ft.size()-1));
+			
+	//	}
+		
+			
+		// finally inform application
+		if (this.notifyCallback != null) {
+			this.notifyCallback.broadcast(info.getSource(), info.getTarget(), info.getHit());
+		}
+	}
+	
+	void asyncSend(Broadcast message, Node node){
+		final Broadcast message1=message;
+		final Node node1=node;
+		 (new Thread(){
+		    	public void run(){
+		    	try { 
+					node1.broadcast(message1); 
+					
+					
+				} catch (CommunicationException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}}
+		    }).start();
+		
+	}
 	
 	
 	
@@ -457,8 +541,7 @@ public final class NodeImpl extends Node {
 	 * 			-> weiter wird nicht gesendet.
 	 * */
 	
-	@Override
-	public final void broadcast(Broadcast info1) throws CommunicationException {
+	public final void old_broadcast(Broadcast info1) throws CommunicationException {
 		final Broadcast info=info1;
 		  // asynchronos send broadcast message to current node
 
@@ -482,8 +565,8 @@ public final class NodeImpl extends Node {
 
 			//check if Maxrange is before the first finger table entry
 			// this is the node behind max range
-			if(maxDistance.compareTo(getDistance(getNodeID(), currentNode.getNodeID()))<0){
-				break;
+			if(maxDistance.compareTo(getDistance(getNodeID(), currentNode.getNodeID()))<=0){
+		//		break;
 			}
 			
 			// define next node
@@ -503,11 +586,11 @@ public final class NodeImpl extends Node {
 			// if maxdistance is greater than next node distancem we take next node as next limit for current node
 			if(maxDistance.compareTo(nextNodeDistance)>0){
 				next_limit=nextNode.getNodeID();
+				
 			}			
-			// else current node get next limit of max range
 			else{
 				next_limit=maxRange;	
-				lastMessage=true;
+			//	lastMessage=true;
 			}
 			
 			// message with next limit
@@ -538,7 +621,7 @@ public final class NodeImpl extends Node {
 			});*/
 			
 		    if(lastMessage){
-		//		System.out.println("Breaking loop");
+				System.out.println("Breaking loop with maxrange: "+maxRange);
 				break; //abbruch, da eingangsrange nicht überschritten werden darf
 				
 			} 
