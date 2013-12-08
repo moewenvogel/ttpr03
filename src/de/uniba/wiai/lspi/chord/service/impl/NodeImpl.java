@@ -32,14 +32,13 @@ import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -51,7 +50,6 @@ import de.uniba.wiai.lspi.chord.com.Node;
 import de.uniba.wiai.lspi.chord.com.RefsAndEntries;
 import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
-import de.uniba.wiai.lspi.chord.service.Chord;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
 import de.uniba.wiai.lspi.util.logging.Logger;
 
@@ -440,15 +438,20 @@ public final class NodeImpl extends Node {
 		return(distance);
 	}
 
-	
+	private final Semaphore semaphore=new Semaphore(1);
 	@Override
 	public final void broadcast(Broadcast info1) throws CommunicationException {
+		try {
+			semaphore.acquire();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		try{
 		final Broadcast info=info1;
 		  // asynchronos send broadcast message to current node
 		List<Node> ft=impl.getFingerTable();
 		Collections.sort(ft);
 		
-		ID maxRange=info.getRange();
 		if(info.getTransaction() > impl.last_transaction){
 			impl.last_transaction=info.getTransaction();
 		}else{
@@ -456,8 +459,7 @@ public final class NodeImpl extends Node {
 			System.out.println("node: "+impl.getURL()+"local transaction number: "+impl.last_transaction+", got: "+info.getTransaction()+" , return");
 			return;
 		}
-		BigInteger maxDistance=getDistance(getNodeID(), maxRange);
-		boolean lastMessage=false; 
+
 		
 		BigInteger	DistanceHereMaxRange=getDistance(getNodeID(), info.getRange());
 		
@@ -506,12 +508,16 @@ public final class NodeImpl extends Node {
 		if (this.notifyCallback != null) {
 			this.notifyCallback.broadcast(info.getSource(), info.getTarget(), info.getHit());
 		}
+		} finally {
+			semaphore.release();
+		}
+
 	}
 	
 	void asyncSend(Broadcast message, Node node){
 		final Broadcast message1=message;
 		final Node node1=node;
-		 (new Thread(){
+		this.asyncExecutor.execute(new Runnable(){
 		    	public void run(){
 		    	try { 
 					node1.broadcast(message1); 
@@ -521,7 +527,7 @@ public final class NodeImpl extends Node {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}}
-		    }).start();
+		    });
 		
 	}
 	

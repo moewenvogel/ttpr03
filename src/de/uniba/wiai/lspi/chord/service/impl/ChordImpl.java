@@ -1142,26 +1142,37 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	private BigInteger ADDRESS_AMOUNT=new BigInteger(Integer.toString((int)Math.pow(2, 160)));
 	public Map<Node, ID> getRing(){
 		
-		Map<Node,ID> ring=new HashMap<Node,ID>();
+		Map<ID,ID> ring=new HashMap<ID,ID>();
 		
 		Node cur_node=localNode;
-		ID addressRange=getPredecessorID();
-		
-		ring.put(cur_node, addressRange);
+		Node node_succ=findSuccessor( ID.valueOf(getID().toBigInteger().add(new BigInteger("1")).mod(ADDRESS_AMOUNT)));
+		ID addressRange;//=getPredecessorID();
+		ID myPred=getPredecessorID();
+		System.out.println("successor is: "+node_succ);
+		ID first=null;
+	//	ring.put(cur_node, addressRange);
 		do{
-			//check if current node is zero -> mod break
-			if(cur_node.getNodeID().toBigInteger()!=BigInteger.ZERO){
-				addressRange=ID.valueOf(cur_node.getNodeID().toBigInteger().subtract(new BigInteger("1")));
-			} else 
-			{
-				addressRange=ID.valueOf(ADDRESS_AMOUNT.subtract(new BigInteger("1")));
-			}
-			cur_node=findSuccessor(addressRange);
-			ring.put(cur_node, addressRange);
+
+			//find range 
+			addressRange=ID.valueOf((cur_node.getNodeID().toBigInteger().add(new BigInteger("1"))).mod(ADDRESS_AMOUNT));
+			ring.put(node_succ.getNodeID(), addressRange);
+			if(first==null)first=node_succ.getNodeID();
+			cur_node=node_succ;
+	
+			node_succ=findSuccessor(ID.valueOf( (node_succ.getNodeID().toBigInteger().add(new BigInteger("1")))));//.mod(ADDRESS_AMOUNT)));
 			
-		}while(addressRange!= ID.valueOf((getID().toBigInteger().add(ADDRESS_AMOUNT).subtract(new BigInteger("1"))).mod(ADDRESS_AMOUNT)));
+		//	System.out.println("successor is: "+node_succ);
 		
-		return(ring);
+		}while(!node_succ.getNodeID().equals(first));
+		//while(!ring.containsKey(getID()));
+		
+		Map<Node, ID> res=new HashMap<Node, ID>();
+		
+		for(java.util.Map.Entry<ID,ID> entry: ring.entrySet()){
+			res.put(findSuccessor(entry.getKey()), entry.getValue());
+		}
+		
+		return(res);
 	}
 
 	@Override

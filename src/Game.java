@@ -7,27 +7,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.spi.LoggingEvent;
-
 import de.uniba.wiai.lspi.chord.com.Node;
-import de.uniba.wiai.lspi.chord.console.command.Wait;
 import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
 import de.uniba.wiai.lspi.chord.service.PropertiesLoader;
 import de.uniba.wiai.lspi.chord.service.impl.ChordImpl;
 import de.uniba.wiai.lspi.util.logging.Logger;
-import de.uniba.wiai.lspi.util.logging.Logger.LogLevel;
 
 public class Game implements NotifyCallback {
 
 	public static final int I = 100;
 	public static final int S = 10;
 	public static ConcurrentHashMap<ID, Integer> testcounter = new ConcurrentHashMap<ID, Integer>();
-	public static final BigInteger ADDRESS_AMOUNT = new BigInteger(
-			Integer.toString((int) Math.pow(2, 160)));
+	public static final BigInteger ADDRESS_AMOUNT = (new BigInteger("2")).pow(160);
 	ChordImpl chord;
 	Logger logger;
+	Player player;
 	Map<ID, Player> players = new HashMap<ID, Player>();
 
 	private Game(int localPort,boolean isCreator)
@@ -40,7 +36,7 @@ public class Game implements NotifyCallback {
 
 		chord = new ChordImpl();
 		chord.setCallback(this);
-
+		
 		this.logger = Logger.getLogger(ChordImpl.class.getName()
 				+ ".unidentified");
 
@@ -57,67 +53,87 @@ public class Game implements NotifyCallback {
 
 		}
 		
+	
+	}
+	
+	public void init(){
+		player=new Player(chord.getID(), 
+				chord.getURL(), 
+				ID.valueOf( (chord.getPredecessorID().toBigInteger().add(BigInteger.ONE)).mod(ADDRESS_AMOUNT) ));
+		
 	}
 
 	/*
-	 * TODO: Players: mapping von ID auf Felder Callback: eigenes feld
-	 * initialisieren und verwalten (retrieve)
+	 * TODO Player getIDFromNum und getNumFromID debuggen
 	 */
 
 	public static void main(String[] args) throws Exception {
 		int testAmount = 10;
 		int baseport = 8080;
 		List<Game> cbs = new ArrayList<Game>();
-		System.out.println("args[0]"+args[0]);
+		System.out.println("args[0] "+args[0]);
 		boolean starter=args[0].equals("first");
-		/*if(starter){
-		cbs.add(new Game(baseport, baseport, true));	
-		}else{
-			Game cb = new Game(baseport+((int)(Math.random()*255+1)) , baseport, false);
-			cbs.add(cb);
-		} */
-		
-		
+	
+
 		Game cb1 = new Game(baseport, true);
 		cbs.add(cb1);
-
+		
 		for (int i = 1; i < testAmount; i++) {
-			//Game cb = new Game(((int)(Math.random()*255+2000)) , false);
 			Game cb = new Game((2000+i) , false);
 			cbs.add(cb);
 
 		}
 
 		Thread.sleep(5000);
-	//	System.out.println("sender: " + cbs.get(0).getString());
-
-		for (int i = 0; i < testAmount; i++) {
-			
+		
+		for (int i = 0; i < testAmount; i++) {	
 			cbs.get(i).printFT();
-
+			cbs.get(i).init();
+			cbs.get(i).player.initializeField(true);
+			System.out.println(cbs.get(i).chord.getURL()+" has ships at: ");
+			System.out.println(cbs.get(i).player.getAllShips());
 		}
 		
 		
-		for (int i = 0; i < 10; i++) {
+		System.out.println("printing playground");
+		Map<Node, ID> playground=cbs.get(1).chord.getRing();
+
+		List<Player> players=new ArrayList<Player>();
+		
+		for(Entry<Node, ID> entry: playground.entrySet()){
+			players.add(new Player(entry.getKey().getNodeID(), entry.getKey().getNodeURL(), entry.getValue()));
+		}
+		Collections.sort(players);
+		System.out.println("Players:");
+		for(Player p: players){
+			System.out.println(p);
+		}
+		
+		// GAME TEST - DO NOT DELETE
+		for(int i=0; i<10;i++){
+			 int ship=(int)(Math.random()*players.size());
+			 int area=(int)(Math.random()*Game.I);
+			 System.out.println(cbs.get(0).chord.getURL()+"\n\t shoots at ship: "+cbs.get(ship).getString()+ "\n\t and area: "+area);
+			 cbs.get(0).chord.retrieve(players.get(ship).getIDFromNum(area));
+
+				Thread.sleep(2000);
+		}
+
+		
+		
+	
+	//DO NOT DELETE. STANDART TEST FOR BROADCAST	
+	/*	for (int i = 0; i < 10; i++) {
 			System.out.println("Test nr: "+i+" with current sender: "+cbs.get(i).getString());
 			cbs.get(i).chord.broadcast(cbs.get(i).chord.getID(), true);
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 			System.out.println("");
 		}
 		
 		for(Entry<ID,Integer> entry: testcounter.entrySet()){
 			System.out.println("Source: "+entry.getKey()+" Value: "+entry.getValue());
 		}
-		//cbs.get(0).chord.broadcast(cbs.get(0).chord.getID(), true);
-		
-	/*	while(true){
-			if(starter){
-			cbs.get(0).chord.broadcast(cbs.get(0).chord.getID(), true);
-			Thread.sleep(2000);
-			}
-		}*/
-		
-
+*/
 	
 	
 	}
@@ -128,7 +144,10 @@ public class Game implements NotifyCallback {
 
 	@Override
 	public void retrieved(ID target) {
-		// TODO Auto-generated method stub
+		System.out.println("got hit! "+this.chord.getURL()+" and shot: "+player.gotShot(target));
+		System.out.println("Area which was hit: "+player.getNumFomID(target));
+		boolean shotShip=player.gotShot(target);
+		chord.broadcast(target, shotShip);
 	}
 
 	@Override
@@ -151,8 +170,8 @@ public class Game implements NotifyCallback {
 		 * System.out.println(source+" has shot into the water of "+respNode); }
 		 */
 
-		System.out.println(getString() + "received Shot at "
-				+ target.toString());
+		System.out.println(getString() + " received Shot at "
+				+ target.toString()+ "which was "+(hit?"hit":"not hit"));
 	}
 
 	/*
@@ -181,7 +200,7 @@ public class Game implements NotifyCallback {
 		Map<Node, ID> nodes = chord.getRing();
 
 		for (Map.Entry<Node, ID> entry : nodes.entrySet()) {
-			Player p = new Player(entry.getKey(), entry.getValue());
+			Player p = new Player(entry.getKey().getNodeID(), entry.getKey().getNodeURL(), entry.getValue());
 			players.put(p.getId(), p);
 		}
 

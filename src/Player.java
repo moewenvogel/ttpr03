@@ -1,3 +1,4 @@
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,25 +8,25 @@ import java.util.Map;
 import de.uniba.wiai.lspi.chord.com.Node;
 import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
+import de.uniba.wiai.lspi.chord.service.Chord;
 import de.uniba.wiai.lspi.chord.service.impl.NodeImpl;
 
 
 public class Player  implements Comparable<Player>{
 
-	private Node node;
+	
 	private ID id;
 	private URL url;
-	private ID maxRespID;
-	private List<ID> sunkenShips;
+	private ID minRespID;
+	private List<ID> sunkenShips = new ArrayList<ID>();
 	private Map<Integer,Boolean> field=new HashMap<Integer,Boolean>();
-	
-	public Player(Node node, ID maxRespID){
-		this.node=node;
-		id=node.getNodeID();
-		url=node.getNodeURL();
-		this.maxRespID=maxRespID;
 
+	public Player(ID node, URL url, ID maxRespID){
 		
+		id=node;
+		this.url=url;
+		this.minRespID=maxRespID;
+		System.out.println("Hello, my URL is: "+url+" and my ID: "+id);
 	}
 
 	
@@ -38,9 +39,9 @@ public class Player  implements Comparable<Player>{
 		if(local){
 			
 			for(int i=0; i<Game.S; i++){
-				int random=(int)Math.random()*Game.I;
-				while(field.get(random)==true){
-					random=(int)Math.random()*Game.I;
+				int random=(int)(Math.random()*Game.I);
+				while(field.get(random).booleanValue()==true){
+					random=(int)(Math.random()*Game.I);
 				}
 				field.put(random, true);
 			}
@@ -48,7 +49,12 @@ public class Player  implements Comparable<Player>{
 	}
 	
 	public void shotIntoWater(ID id){
-		field.put(getNumOfField(id), false);
+		field.put(getNumFomID(id), false);
+	}
+	
+	public boolean gotShot(ID id){
+		int area=getNumFomID(id);
+		return field.get(area).booleanValue();
 	}
 	
 	public List<Integer> getAllShips(){
@@ -76,19 +82,38 @@ public class Player  implements Comparable<Player>{
 		return(sunkenShips.size()==Game.S? true:false);
 	}
 	
-	public int getNumOfField(ID id){
-		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.id,this.maxRespID);
+	public int getNumFomID(ID id){
+		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.minRespID,this.id);
+		BigInteger sizeToId=NodeImpl.getDistance(id,this.id);
 		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
-		int r=Integer.parseInt(id.toBigInteger().divide(oneFieldSize).toString());
+		
+		double d=(sizeToId.divide(oneFieldSize)).doubleValue();
+
+		int r =(int)Math.floor(d);
 		return r;
 	}
 	
+	public ID getIDFromNum(int num){
+		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.minRespID,this.id);
+		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
+		
+		ID fieldID=ID.valueOf(( (oneFieldSize.multiply(new BigInteger(Integer.toString(num))))
+														.add(this.minRespID.toBigInteger())
+														.add(BigInteger.ONE)
+														)
+														.mod(Game.ADDRESS_AMOUNT)
+				);
+		return fieldID;
+	}
 	
-	/* sorting players in order of their amount of sunken ships
+	
+	/* sorting players by their node id
 	 * */
 	@Override
 	public int compareTo(Player p) {
-		return(Integer.valueOf(this.sunkenShips.size()).compareTo(p.sunkenShips.size()));
+		return this.id.compareTo(p.id);
+		
+		//return(Integer.valueOf(this.sunkenShips.size()).compareTo(p.sunkenShips.size()));
 	}
 	
 	
@@ -109,7 +134,7 @@ public class Player  implements Comparable<Player>{
 	}
 	
 	public ID getLastRespID() {
-		return maxRespID;
+		return minRespID;
 	}
 	
 	@Override 
