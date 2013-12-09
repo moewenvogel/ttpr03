@@ -49,11 +49,11 @@ public class Player  implements Comparable<Player>{
 	}
 	
 	public void shotIntoWater(ID id){
-		field.put(getNumFomID(id), false);
+		field.put(getNumFromID(id), false);
 	}
 	
 	public boolean gotShot(ID id){
-		int area=getNumFomID(id);
+		int area=getNumFromID(id);
 		return field.get(area).booleanValue();
 	}
 	
@@ -82,7 +82,7 @@ public class Player  implements Comparable<Player>{
 		return(sunkenShips.size()==Game.S? true:false);
 	}
 	
-	public int getNumFomID(ID id){
+	public int getNumFromID(ID id){
 		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.minRespID,this.id);
 		BigInteger sizeToId=NodeImpl.getDistance(id,this.id);
 		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
@@ -90,6 +90,9 @@ public class Player  implements Comparable<Player>{
 		double d=(sizeToId.divide(oneFieldSize)).doubleValue();
 
 		int r =(int)Math.floor(d);
+//		System.out.println("getNumFomID: " + r);
+//		System.out.println("getIDFromNum: " + getIDFromNum(r));
+//		System.out.println("getIDFromNum: " + getIDFromNum(r));
 		return r;
 	}
 	

@@ -1118,9 +1118,7 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	
 	int last_transaction=0;
 	@Override
-	public void broadcast (ID target, Boolean hit) {
-		
-		
+	public void broadcast (ID target, Boolean hit) {		
 		// komplett Broadcast, daher:
 		// -> neuer Range geht bis zu mir selber
 		ID newRange=ID.valueOf(getID().toBigInteger().subtract(new BigInteger("1")));

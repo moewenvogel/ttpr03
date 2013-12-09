@@ -126,6 +126,7 @@ public final class ID implements Comparable<ID>, Serializable {
      * negative.
      */
     public static ID valueOf(final BigInteger value) {
+    	
         final byte[] barr = value.toByteArray();
         final int start;
         if (barr.length < 20) {
@@ -138,6 +139,8 @@ public final class ID implements Comparable<ID>, Serializable {
         } else {
             start = 0;
         }
+//        System.out.println("new id of + " + value);
+//        System.out.println("new id of: + " + new BigInteger(barr));
         return new ID(Arrays.copyOfRange(barr, start, barr.length));
     }
     
