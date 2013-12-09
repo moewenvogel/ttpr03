@@ -19,14 +19,14 @@ public class Player  implements Comparable<Player>{
 	private URL url;
 	private ID minRespID;
 	private List<ID> sunkenShips = new ArrayList<ID>();
-	private Map<Integer,Boolean> field=new HashMap<Integer,Boolean>();
+	public Map<Integer,Boolean> field=new HashMap<Integer,Boolean>();
 
-	public Player(ID node, URL url, ID maxRespID){
+	public Player(ID node, URL url, ID minRespID){
 		
 		id=node;
 		this.url=url;
-		this.minRespID=maxRespID;
-		System.out.println("Hello, my URL is: "+url+" and my ID: "+id);
+		this.minRespID=minRespID;
+		System.out.println("Hello, my URL is: "+url+" and my ID: "+id+" my min resp"+ this.minRespID);
 	}
 
 	
@@ -84,21 +84,27 @@ public class Player  implements Comparable<Player>{
 	
 	public int getNumFromID(ID id){
 		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.minRespID,this.id);
-		BigInteger sizeToId=NodeImpl.getDistance(id,this.id);
+		BigInteger sizeToId=NodeImpl.getDistance(this.minRespID,id);
 		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
 		
 		double d=(sizeToId.divide(oneFieldSize)).doubleValue();
 
+		
 		int r =(int)Math.floor(d);
 //		System.out.println("getNumFomID: " + r);
 //		System.out.println("getIDFromNum: " + getIDFromNum(r));
 //		System.out.println("getIDFromNum: " + getIDFromNum(r));
-		return r;
+		return (r>=Game.I?r-1:r);
 	}
 	
 	public ID getIDFromNum(int num){
+		System.out.println("minresp: " + this.minRespID);
+		System.out.println("id: " + this.id);
 		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.minRespID,this.id);
+		System.out.println("sizeOfAdresspace: " + sizeOfAdresspace);
 		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
+		System.out.println("oneFieldSize: " + oneFieldSize);
+
 		
 		ID fieldID=ID.valueOf(( (oneFieldSize.multiply(new BigInteger(Integer.toString(num))))
 														.add(this.minRespID.toBigInteger())
@@ -106,6 +112,8 @@ public class Player  implements Comparable<Player>{
 														)
 														.mod(Game.ADDRESS_AMOUNT)
 				);
+		System.out.println("fieldID: " + fieldID);
+
 		return fieldID;
 	}
 	

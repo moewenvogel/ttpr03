@@ -1,3 +1,4 @@
+import java.io.ObjectInputStream.GetField;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import de.uniba.wiai.lspi.chord.data.URL;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
 import de.uniba.wiai.lspi.chord.service.PropertiesLoader;
 import de.uniba.wiai.lspi.chord.service.impl.ChordImpl;
+import de.uniba.wiai.lspi.chord.service.impl.NodeImpl;
 import de.uniba.wiai.lspi.util.logging.Logger;
 
 public class Game implements NotifyCallback {
@@ -31,9 +33,9 @@ public class Game implements NotifyCallback {
 	Map<ID, Player> players = new HashMap<ID, Player>();
 
 	private Game(int localPort, boolean isCreator) throws Exception {
-		
-			PropertiesLoader.loadPropertyFile();
-	
+
+		PropertiesLoader.loadPropertyFile();
+
 		chord = new ChordImpl();
 		chord.setCallback(this);
 
@@ -107,36 +109,49 @@ public class Game implements NotifyCallback {
 		}
 
 		System.out.println("printing playground");
-		Map<Node, ID> playground = cbs.get(1).chord.getRing();
-
+		Map<Node, ID> playground = cbs.get(0).chord.getRing();
+		
+		
 		List<Player> players = new ArrayList<Player>();
-
+		System.out.println("playground");
 		for (Entry<Node, ID> entry : playground.entrySet()) {
-			players.add(new Player(entry.getKey().getNodeID(), entry.getKey()
-					.getNodeURL(), entry.getValue()));
+			Player p=new Player(entry.getKey().getNodeID(), entry.getKey()
+					.getNodeURL(), entry.getValue());
+			p.initializeField(true);
+			players.add(p);
+		
 		}
 		Collections.sort(players);
-		System.out.println("Players:");
-		for (Player p : players) {
-			System.out.println(p);
-			System.out.println(p.getNumFromID(p.getId()));
-			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
-		}
 
-		// GAME TEST - DO NOT DELETE
-		for (int i = 0; i < 10; i++) {
-			int ship = (int) (Math.random() * players.size());
+		
+		
+		  System.out.println("Players:"); for (Player p : players) {
+		  System.out.println(p); System.out.println(p.getNumFromID(p.getId()));
+		  System.out.println(p.getIDFromNum(p.getNumFromID(p.getId()))); }
+		 
+		
+			System.out.println("  id: " +players.get(5).toString());
+			int  temp = players.get(5).getNumFromID(players.get(5).getId());
+			System.out.println("get num from this: "+ temp);
+			System.out.println("get id from num "+ players.get(5).getIDFromNum(temp));
+		  
+		  
+		  // GAME TEST - DO NOT DELETE 
+		for (int i = 0; i < players.size(); i++) {
+			int ship = (int) (Math.random() * i);
 			int area = (int) (Math.random() * Game.I);
+			//int area=10;
 			System.out.println(cbs.get(0).chord.getURL()
 					+ "\n\t shoots at ship: " + cbs.get(ship).getString()
 					+ "\n\t and area: " + area);
 			cbs.get(0).chord.retrieve(players.get(ship).getIDFromNum(area));
-
 			Thread.sleep(2000);
 		}
-
+		 
 		// standardbroadcasttest(cbs);
 	}
+
+	
 
 	private static void standardbroadcasttest(List<Game> cbs) throws Exception {
 		for (int i = 0; i < 10; i++) {
@@ -161,7 +176,8 @@ public class Game implements NotifyCallback {
 	public void retrieved(ID target) {
 		System.out.println("got hit! " + this.chord.getURL() + " and shot: "
 				+ player.gotShot(target));
-		System.out.println("Area which was hit: " + player.getNumFromID(target));
+		System.out
+				.println("Area which was hit: " + player.getNumFromID(target));
 		boolean shotShip = player.gotShot(target);
 		chord.broadcast(target, shotShip);
 	}

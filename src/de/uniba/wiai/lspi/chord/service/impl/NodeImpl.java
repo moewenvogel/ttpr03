@@ -437,6 +437,13 @@ public final class NodeImpl extends Node {
 		BigInteger distance=((adressSpace.subtract(from.toBigInteger())).add(to.toBigInteger())).mod(adressSpace);
 		return(distance);
 	}
+	
+	public static BigInteger getDistance( ID from, ID to,BigInteger addressSpace){
+	//	BigInteger adressSpace=(new BigDecimal(Math.pow(2, 160))).toBigInteger();
+		BigInteger distance=((addressSpace.subtract(from.toBigInteger())).add(to.toBigInteger())).mod(addressSpace);
+		return(distance);
+	}
+
 
 	private final Semaphore semaphore=new Semaphore(1);
 	@Override

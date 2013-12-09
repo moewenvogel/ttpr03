@@ -1137,7 +1137,7 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	 * returns the ring with the mapping:
 	 * responsible node -> max range;
 	 * */
-	private BigInteger ADDRESS_AMOUNT=new BigInteger(Integer.toString((int)Math.pow(2, 160)));
+	private BigInteger ADDRESS_AMOUNT=new BigInteger("2").pow(160);
 	public Map<Node, ID> getRing(){
 		
 		Map<ID,ID> ring=new HashMap<ID,ID>();
@@ -1159,7 +1159,7 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	
 			node_succ=findSuccessor(ID.valueOf( (node_succ.getNodeID().toBigInteger().add(new BigInteger("1")))));//.mod(ADDRESS_AMOUNT)));
 			
-		//	System.out.println("successor is: "+node_succ);
+			System.out.println("successor is: "+node_succ.getNodeID());
 		
 		}while(!node_succ.getNodeID().equals(first));
 		//while(!ring.containsKey(getID()));
