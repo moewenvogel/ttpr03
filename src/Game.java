@@ -1,3 +1,4 @@
+import java.awt.EventQueue;
 import java.io.ObjectInputStream.GetField;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -8,7 +9,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.swing.text.FieldView;
+
 import de.uniba.wiai.lspi.chord.com.Node;
+import de.uniba.wiai.lspi.chord.console.command.Exit;
 import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
@@ -18,19 +22,19 @@ import de.uniba.wiai.lspi.chord.service.impl.NodeImpl;
 import de.uniba.wiai.lspi.util.logging.Logger;
 
 public class Game implements NotifyCallback {
-
+	public static Gui gui;
 	// Interval
 	public static final int I = 100;
 	// Ships
 	public static final int S = 10;
-
+	 boolean draw=false;
 	public static ConcurrentHashMap<ID, Integer> testcounter = new ConcurrentHashMap<ID, Integer>();
 	public static final BigInteger ADDRESS_AMOUNT = (new BigInteger("2"))
 			.pow(160);
 	ChordImpl chord;
 	Logger logger;
 	Player player;
-	Map<ID, Player> players = new HashMap<ID, Player>();
+	List<Player> enemies = new ArrayList<Player>();
 
 	private Game(int localPort, boolean isCreator) throws Exception {
 
@@ -67,6 +71,17 @@ public class Game implements NotifyCallback {
 		player = new Player(chord.getID(), chord.getURL(), ID.valueOf((chord
 				.getPredecessorID().toBigInteger().add(BigInteger.ONE))
 				.mod(ADDRESS_AMOUNT)));
+		player.initializeField(true);
+		// initialize the status map
+		Map<Node, ID> nodes = chord.getRing();
+
+		for (Map.Entry<Node, ID> entry : nodes.entrySet()) {
+			Player p = new Player(entry.getKey().getNodeID(), entry.getKey()
+					.getNodeURL(), entry.getValue());
+			p.initializeField(false);
+			if(!p.getId().equals(this.player.getId())) enemies.add(p);
+		}
+		Collections.sort(enemies);
 	}
 
 	public static boolean isFirst(String[] args) {
@@ -85,11 +100,14 @@ public class Game implements NotifyCallback {
 	 */
 
 	public static void main(String[] args) throws Exception {
+		gui = new Gui();
+		gui.frame.setVisible(true);
+
 		int testAmount = 10;
 		int baseport = 8080;
 		List<Game> cbs = new ArrayList<Game>();
 		boolean starter = isFirst(args);
-
+	
 		Game cb1 = creator(baseport);
 		cbs.add(cb1);
 
@@ -97,57 +115,30 @@ public class Game implements NotifyCallback {
 			Game cb = game(2000 + i);
 			cbs.add(cb);
 		}
-
+		
+		cbs.get(0).draw=true;
 		Thread.sleep(5000);
+		
+		
+
+
 
 		for (int i = 0; i < testAmount; i++) {
 			cbs.get(i).printFT();
 			cbs.get(i).init();
-			cbs.get(i).player.initializeField(true);
 			System.out.println(cbs.get(i).chord.getURL() + " has ships at: ");
 			System.out.println(cbs.get(i).player.getAllShips());
 		}
 
-		System.out.println("printing playground");
-		Map<Node, ID> playground = cbs.get(0).chord.getRing();
 		
 		
-		List<Player> players = new ArrayList<Player>();
-		System.out.println("playground");
-		for (Entry<Node, ID> entry : playground.entrySet()) {
-			Player p=new Player(entry.getKey().getNodeID(), entry.getKey()
-					.getNodeURL(), entry.getValue());
-			p.initializeField(true);
-			players.add(p);
-		
-		}
-		Collections.sort(players);
-
-		
-		
-		  System.out.println("Players:"); for (Player p : players) {
+		  System.out.println("Players:"); for (Player p : cbs.get(0).enemies) {
 		  System.out.println(p); System.out.println(p.getNumFromID(p.getId()));
 		  System.out.println(p.getIDFromNum(p.getNumFromID(p.getId()))); }
 		 
-		
-			System.out.println("  id: " +players.get(5).toString());
-			int  temp = players.get(5).getNumFromID(players.get(5).getId());
-			System.out.println("get num from this: "+ temp);
-			System.out.println("get id from num "+ players.get(5).getIDFromNum(temp));
-		  
-		  
-		  // GAME TEST - DO NOT DELETE 
-		for (int i = 0; i < players.size(); i++) {
-			int ship = (int) (Math.random() * i);
-			int area = (int) (Math.random() * Game.I);
-			//int area=10;
-			System.out.println(cbs.get(0).chord.getURL()
-					+ "\n\t shoots at ship: " + cbs.get(ship).getString()
-					+ "\n\t and area: " + area);
-			cbs.get(0).chord.retrieve(players.get(ship).getIDFromNum(area));
-			Thread.sleep(2000);
-		}
-		 
+
+	     cbs.get(0).play();
+	
 		// standardbroadcasttest(cbs);
 	}
 
@@ -158,7 +149,7 @@ public class Game implements NotifyCallback {
 			System.out.println("Test nr: " + i + " with current sender: "
 					+ cbs.get(i).getString());
 			cbs.get(i).chord.broadcast(cbs.get(i).chord.getID(), true);
-			Thread.sleep(2000);
+			Thread.sleep(5000);
 			System.out.println("");
 		}
 
@@ -174,12 +165,27 @@ public class Game implements NotifyCallback {
 
 	@Override
 	public void retrieved(ID target) {
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("got hit! " + this.chord.getURL() + " and shot: "
 				+ player.gotShot(target));
 		System.out
 				.println("Area which was hit: " + player.getNumFromID(target));
 		boolean shotShip = player.gotShot(target);
 		chord.broadcast(target, shotShip);
+		
+		if(player.getSunkenShips().size()<Game.S){
+		randomStrat();
+		}else{
+			System.out.println(player.fieldVis());
+			for(int i=0; i<enemies.size();i++) {
+				System.out.println(enemies.get(i).fieldVis());
+			}
+		}
 	}
 
 	@Override
@@ -190,18 +196,30 @@ public class Game implements NotifyCallback {
 			testcounter.put(source, 1);
 		}
 
-		boolean knockedOut = false;
-		Player respNode = players.get(getDaddy(target));
-
-		/*
-		 * if(hit){ knockedOut=respNode.sunkShip(target); if(knockedOut)
-		 * System.out.println(source+" HAS WON!!! "+respNode+" IS DEAD!!!");
-		 * }else{ players.get(getDaddy(target)).shotIntoWater(target);
-		 * System.out.println(source+" has shot into the water of "+respNode); }
-		 */
 
 		System.out.println(getString() + " received Shot at "
 				+ target.toString() + "which was " + (hit ? "hit" : "not hit"));
+		Player p=getDaddy(target);
+		if(hit){
+			boolean last=p.sunkShip(target);
+			if(last){
+				System.out.println("WAS LAST SHIP!!! "+p.toString()+" IS DEAD!!!");
+				
+		//		System.out.println(player.fieldVis());
+				
+		//		for(int i=0; i<enemies.size();i++) {
+		//			System.out.println(enemies.get(i).fieldVis());
+		//		}
+				
+				
+			}
+		}else{
+			p.shotIntoWater(target);
+			//system.out.println("shot into water!");
+		}
+		
+		if(draw) drawField();
+		
 	}
 
 	/*
@@ -209,10 +227,10 @@ public class Game implements NotifyCallback {
 	 */
 	public Player getDaddy(ID id) {
 		Player res = null;
-		for (Map.Entry<ID, Player> entry : players.entrySet()) {
-			if (id.isInInterval(entry.getKey(), entry.getValue()
-					.getLastRespID())) {
-				res = entry.getValue();
+		if(player.isMyNode(id))res=player;
+		for (Player p : enemies) {
+			if (p.isMyNode(id)) {
+				res = p;
 				break;
 			}
 		}
@@ -221,33 +239,31 @@ public class Game implements NotifyCallback {
 	}
 
 	public void play() {
-		// calculate the number of players:
-		int ftSize = chord.getFingerTable().size();
-		int playerAmount = (int) Math.pow(2, 160) / ftSize;
-		System.out.println("Recognised " + playerAmount + " players");
-
-		// initialize the status map
-		Map<Node, ID> nodes = chord.getRing();
-
-		for (Map.Entry<Node, ID> entry : nodes.entrySet()) {
-			Player p = new Player(entry.getKey().getNodeID(), entry.getKey()
-					.getNodeURL(), entry.getValue());
-			players.put(p.getId(), p);
-		}
-
-		// initialize own field
-
-		// TODO game loop
-
+		
+		System.out.println("Found "+enemies+" ENEMIES!!!! DIIIIIIEEEEEEE!!!");
+		
+		Collections.sort(enemies);
+	//	if(chord.getID().compareTo(enemies.get(enemies.size()-1).getId()) > 0 ){
+		randomStrat();
+	//	}
+	
 	}
 
-	public ID easyStrat() {
-		/*
-		 * Einfache Strategie: Schiesse auf den Knoten mit den meisten Schiffen,
-		 * ausser jemand hat nur noch ein Schiff --> dann auf den schiessen
-		 */
-
-		return (null);
+	public void randomStrat() {
+		
+		int ship = (int) (Math.random() * enemies.size());
+		int area = (int) (Math.random() * Game.I);
+		
+		System.out.println(chord.getURL()
+				+ "\n\t shoots at ship: " + enemies.get(ship).toString()
+				+ "\n\t and area: " + area);
+		chord.retrieve(enemies.get(ship).getIDFromNum(area));
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void printFT() {
@@ -259,6 +275,15 @@ public class Game implements NotifyCallback {
 
 	public String getString() {
 		return (chord.getURL().toString());
+	}
+	
+	public void drawField(){
+		String field=player.fieldVis().concat("\n");
+		for(Player p: this.enemies){
+			field=field.concat(p.fieldVis().concat("\n"));
+		}
+		gui.txtrLog.setText("");
+		gui.txtrLog.setText(field);
 	}
 
 }

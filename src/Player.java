@@ -2,8 +2,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uniba.wiai.lspi.chord.com.Node;
 import de.uniba.wiai.lspi.chord.data.ID;
@@ -18,8 +20,11 @@ public class Player  implements Comparable<Player>{
 	private ID id;
 	private URL url;
 	private ID minRespID;
-	private List<ID> sunkenShips = new ArrayList<ID>();
+	private Set<Integer> sunkenShips = new HashSet<Integer>();
+	private Set<Integer> emptyWater= new HashSet<Integer>();
+	boolean local=false;
 	public Map<Integer,Boolean> field=new HashMap<Integer,Boolean>();
+	
 
 	public Player(ID node, URL url, ID minRespID){
 		
@@ -34,6 +39,7 @@ public class Player  implements Comparable<Player>{
 		for(int i=0; i<Game.I; i++){
 			field.put(i, false);
 		}
+		this.local=local;
 		
 		//fill field only with ships if it is my node
 		if(local){
@@ -49,12 +55,18 @@ public class Player  implements Comparable<Player>{
 	}
 	
 	public void shotIntoWater(ID id){
-		field.put(getNumFromID(id), false);
+		emptyWater.add(getNumFromID(id));
 	}
 	
 	public boolean gotShot(ID id){
 		int area=getNumFromID(id);
-		return field.get(area).booleanValue();
+		boolean hit=field.get(area).booleanValue();
+		if(hit){
+			sunkenShips.add(area);
+		}else{
+			emptyWater.add(area);
+		}
+		return hit;
 	}
 	
 	public List<Integer> getAllShips(){
@@ -78,7 +90,7 @@ public class Player  implements Comparable<Player>{
 	}
 	//returns true if all ships have died
 	public boolean sunkShip(ID id){
-		sunkenShips.add(id);
+		sunkenShips.add(getNumFromID(id));
 		return(sunkenShips.size()==Game.S? true:false);
 	}
 	
@@ -98,12 +110,12 @@ public class Player  implements Comparable<Player>{
 	}
 	
 	public ID getIDFromNum(int num){
-		System.out.println("minresp: " + this.minRespID);
-		System.out.println("id: " + this.id);
+		//System.out.println("minresp: " + this.minRespID);
+		//System.out.println("id: " + this.id);
 		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.minRespID,this.id);
-		System.out.println("sizeOfAdresspace: " + sizeOfAdresspace);
+		//System.out.println("sizeOfAdresspace: " + sizeOfAdresspace);
 		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
-		System.out.println("oneFieldSize: " + oneFieldSize);
+		//System.out.println("oneFieldSize: " + oneFieldSize);
 
 		
 		ID fieldID=ID.valueOf(( (oneFieldSize.multiply(new BigInteger(Integer.toString(num))))
@@ -129,13 +141,9 @@ public class Player  implements Comparable<Player>{
 	
 	
 
-	
-	public Map<Integer,Boolean> getField(){
-		return field;
-	}
 
 	
-	public List<ID> getSunkenShips() {
+	public Set<Integer> getSunkenShips() {
 		return sunkenShips;
 	}
 
@@ -158,6 +166,37 @@ public class Player  implements Comparable<Player>{
 		r=r+"\n\t[alive: "+(Game.S-this.sunkenShips.size())+"]\n\t[unknown water left: "+(Game.I-this.sunkenShips.size()-this.getAllWater().size());
 		
 		return r;
+	}
+	public boolean isMyNode(ID id){
+		BigInteger sizeOfAdresspace=NodeImpl.getDistance(this.minRespID,this.id);
+		BigInteger distanceToId=NodeImpl.getDistance(this.minRespID,id);
+
+		if(distanceToId.compareTo(sizeOfAdresspace)<=0){
+			return true;
+		}else {
+			return false;
+		}
+	}
+	
+	public String fieldVis(){
+		String res="";
+		for(int i=0; i<field.size();i++){
+			boolean ship=field.get(i);
+			
+			if(sunkenShips.contains(i)){
+				res=res.concat("x");
+			}		
+			else if(local && ship )
+				res=res.concat("O");
+		
+			else if( emptyWater.contains(i)){
+				res=res.concat("e");
+			}
+			else{
+				res=res.concat(".");
+			}
+		}
+		return(res);
 	}
 
 
