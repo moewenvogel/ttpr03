@@ -137,9 +137,9 @@ public class Game implements NotifyCallback {
 		  System.out.println(p.getIDFromNum(p.getNumFromID(p.getId()))); }
 		 
 
-	  //   cbs.get(0).play();
+	     cbs.get(0).play();
 	
-		 standardbroadcasttest(cbs);
+	//	 standardbroadcasttest(cbs);
 	}
 
 	
