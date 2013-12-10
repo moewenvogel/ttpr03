@@ -137,9 +137,9 @@ public class Game implements NotifyCallback {
 		  System.out.println(p.getIDFromNum(p.getNumFromID(p.getId()))); }
 		 
 
-	     cbs.get(0).play();
+	  //   cbs.get(0).play();
 	
-		// standardbroadcasttest(cbs);
+		 standardbroadcasttest(cbs);
 	}
 
 	
@@ -149,7 +149,7 @@ public class Game implements NotifyCallback {
 			System.out.println("Test nr: " + i + " with current sender: "
 					+ cbs.get(i).getString());
 			cbs.get(i).chord.broadcast(cbs.get(i).chord.getID(), true);
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 			System.out.println("");
 		}
 

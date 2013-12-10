@@ -32,11 +32,14 @@ import static de.uniba.wiai.lspi.util.logging.Logger.LogLevel.INFO;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
@@ -446,10 +449,11 @@ public final class NodeImpl extends Node {
 
 
 	private final Semaphore semaphore=new Semaphore(1);
+	Vector<Integer> usedTrns=new Vector<Integer>();	
 	@Override
 	public final void broadcast(Broadcast info1) throws CommunicationException {
 		try {
-			semaphore.acquire();
+		semaphore.acquire();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -458,9 +462,12 @@ public final class NodeImpl extends Node {
 		  // asynchronos send broadcast message to current node
 		List<Node> ft=impl.getFingerTable();
 		Collections.sort(ft);
-		
-		if(info.getTransaction() > impl.last_transaction){
-			impl.last_transaction=info.getTransaction();
+		if (!(usedTrns.contains(info1.getTransaction()))){
+			usedTrns.add(info1.getTransaction());
+			if(info.getTransaction() > impl.last_transaction){
+				
+				impl.last_transaction=info.getTransaction();
+			}
 		}else{
 			// do not comment out, seems to be important to get the threads working withoud loosing outputs... somewhat strange.....
 			System.out.println("node: "+impl.getURL()+"local transaction number: "+impl.last_transaction+", got: "+info.getTransaction()+" , return");
