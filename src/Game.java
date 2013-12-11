@@ -23,11 +23,12 @@ import de.uniba.wiai.lspi.util.logging.Logger;
 
 public class Game implements NotifyCallback {
 	public static Gui gui;
+	public boolean local = true;
 	// Interval
 	public static final int I = 100;
 	// Ships
 	public static final int S = 10;
-	 boolean draw=false;
+	boolean draw = false;
 	public static ConcurrentHashMap<ID, Integer> testcounter = new ConcurrentHashMap<ID, Integer>();
 	public static final BigInteger ADDRESS_AMOUNT = (new BigInteger("2"))
 			.pow(160);
@@ -36,8 +37,14 @@ public class Game implements NotifyCallback {
 	Player player;
 	List<Player> enemies = new ArrayList<Player>();
 
-	private Game(int localPort, boolean isCreator) throws Exception {
 
+	public static void main(String[] args) throws Exception {
+		testNetwork();
+	}
+
+	private Game(int localPort, boolean isCreator, boolean local) throws Exception {
+
+		this.local = local;
 		PropertiesLoader.loadPropertyFile();
 
 		chord = new ChordImpl();
@@ -46,25 +53,39 @@ public class Game implements NotifyCallback {
 		this.logger = Logger.getLogger(ChordImpl.class.getName()
 				+ ".unidentified");
 
-		String protocol = URL.KNOWN_PROTOCOLS.get(URL.LOCAL_PROTOCOL);
-		// URL localUrl = new URL(protocol +
-		// "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
-		URL localUrl = new URL(protocol + "://127.0.0.1:" + localPort + "/");
-		URL bootstrapUrl = new URL(protocol + "://127.0.0.1:2000/");
-
-		if (isCreator) {
-			chord.create(bootstrapUrl);
+		if (local) {
+			String protocol = URL.KNOWN_PROTOCOLS.get(URL.LOCAL_PROTOCOL);
+			// URL localUrl = new URL(protocol +
+			// "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
+			URL localUrl = new URL(protocol + "://127.0.0.1:" + localPort + "/");
+			URL bootstrapUrl = new URL(protocol + "://127.0.0.1:2000/");
+			if (isCreator) {
+				chord.create(bootstrapUrl);
+			} else {
+				chord.join(localUrl, bootstrapUrl);
+			}
 		} else {
-			chord.join(localUrl, bootstrapUrl);
+			String protocol = URL.KNOWN_PROTOCOLS.get(URL.SOCKET_PROTOCOL);
+			// URL localUrl = new URL(protocol +
+			// "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
+			URL localUrl = new URL(protocol + "://141.22.64.99:" + localPort
+					+ "/");
+			URL bootstrapUrl = new URL(protocol + "://141.22.95.8:1234/");
+			if (isCreator) {
+				chord.create(bootstrapUrl);
+			} else {
+				chord.join(localUrl, bootstrapUrl);
+			}
 		}
+
 	}
 
-	public static Game game(int localPort) throws Exception {
-		return new Game(localPort, false);
+	public static Game game(int localPort,boolean local) throws Exception {
+		return new Game(localPort, false,local);
 	}
 
-	public static Game creator(int localPort) throws Exception {
-		return new Game(localPort, true);
+	public static Game creator(int localPort,boolean local) throws Exception {
+		return new Game(localPort, true,local);
 	}
 
 	public void init() {
@@ -79,7 +100,8 @@ public class Game implements NotifyCallback {
 			Player p = new Player(entry.getKey().getNodeID(), entry.getKey()
 					.getNodeURL(), entry.getValue());
 			p.initializeField(false);
-			if(!p.getId().equals(this.player.getId())) enemies.add(p);
+			if (!p.getId().equals(this.player.getId()))
+				enemies.add(p);
 		}
 		Collections.sort(enemies);
 	}
@@ -95,33 +117,69 @@ public class Game implements NotifyCallback {
 		}
 	}
 
-	/*
-	 * TODO Player getIDFromNum und getNumFromID debuggen
-	 */
+	public static void testNetwork() throws Exception {
+		boolean local = false;
+		gui = new Gui();
+		gui.frame.setVisible(true);
 
-	public static void main(String[] args) throws Exception {
+		int baseport = 8080;
+		List<Game> cbs = new ArrayList<Game>();
+
+		// Game creator = creator(baseport);
+		// cbs.add(creator);
+
+		Game player = game(2000,local);
+		cbs.add(player);
+
+		cbs.get(0).draw = true;
+		Thread.sleep(5000);
+
+		for (Game g:cbs) {
+			g.printFT();
+			g.init();
+			System.out.println(g.chord.getURL() + " has ships at: ");
+			System.out.println(g.player.getAllShips());
+		}
+
+		System.out.println("Players:");
+		for (Player p : cbs.get(0).enemies) {
+			System.out.println(p);
+			System.out.println(p.getNumFromID(p.getId()));
+			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
+		}
+		
+		Collections.sort(player.enemies);
+		if(player.enemies.get(player.enemies.size()-1).compareTo(player.player)<0){
+			System.out.println("we are the first");
+			player.broadcast(player.chord.getID(), player.chord.getID(), true);
+		}
+		else
+			System.out.println("we are NOT the first");
+
+		// cbs.get(0).play();
+
+		// standardbroadcasttest(cbs);
+	}
+
+	public static void testLocal() throws Exception {
+		boolean local = true;
 		gui = new Gui();
 		gui.frame.setVisible(true);
 
 		int testAmount = 10;
 		int baseport = 8080;
 		List<Game> cbs = new ArrayList<Game>();
-		boolean starter = isFirst(args);
-	
-		Game cb1 = creator(baseport);
+
+		Game cb1 = creator(baseport,local);
 		cbs.add(cb1);
 
 		for (int i = 1; i < testAmount; i++) {
-			Game cb = game(2000 + i);
+			Game cb = game(2000 + i,local);
 			cbs.add(cb);
 		}
-		
-		cbs.get(0).draw=true;
+
+		cbs.get(0).draw = true;
 		Thread.sleep(5000);
-		
-		
-
-
 
 		for (int i = 0; i < testAmount; i++) {
 			cbs.get(i).printFT();
@@ -130,19 +188,17 @@ public class Game implements NotifyCallback {
 			System.out.println(cbs.get(i).player.getAllShips());
 		}
 
-		
-		
-		  System.out.println("Players:"); for (Player p : cbs.get(0).enemies) {
-		  System.out.println(p); System.out.println(p.getNumFromID(p.getId()));
-		  System.out.println(p.getIDFromNum(p.getNumFromID(p.getId()))); }
-		 
+		System.out.println("Players:");
+		for (Player p : cbs.get(0).enemies) {
+			System.out.println(p);
+			System.out.println(p.getNumFromID(p.getId()));
+			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
+		}
 
-	     cbs.get(0).play();
-	
-	//	 standardbroadcasttest(cbs);
+		cbs.get(0).play();
+
+		// standardbroadcasttest(cbs);
 	}
-
-	
 
 	private static void standardbroadcasttest(List<Game> cbs) throws Exception {
 		for (int i = 0; i < 10; i++) {
@@ -177,12 +233,12 @@ public class Game implements NotifyCallback {
 				.println("Area which was hit: " + player.getNumFromID(target));
 		boolean shotShip = player.gotShot(target);
 		chord.broadcast(target, shotShip);
-		
-		if(player.getSunkenShips().size()<Game.S){
-		randomStrat();
-		}else{
+
+		if (player.getSunkenShips().size() < Game.S) {
+			randomStrat();
+		} else {
 			System.out.println(player.fieldVis());
-			for(int i=0; i<enemies.size();i++) {
+			for (int i = 0; i < enemies.size(); i++) {
 				System.out.println(enemies.get(i).fieldVis());
 			}
 		}
@@ -196,30 +252,30 @@ public class Game implements NotifyCallback {
 			testcounter.put(source, 1);
 		}
 
-
 		System.out.println(getString() + " received Shot at "
 				+ target.toString() + "which was " + (hit ? "hit" : "not hit"));
-		Player p=getDaddy(target);
-		if(hit){
-			boolean last=p.sunkShip(target);
-			if(last){
-				System.out.println("WAS LAST SHIP!!! "+p.toString()+" IS DEAD!!!");
-				
-		//		System.out.println(player.fieldVis());
-				
-		//		for(int i=0; i<enemies.size();i++) {
-		//			System.out.println(enemies.get(i).fieldVis());
-		//		}
-				
-				
+		Player p = getDaddy(target);
+		if (hit) {
+			boolean last = p.sunkShip(target);
+			if (last) {
+				System.out.println("WAS LAST SHIP!!! " + p.toString()
+						+ " IS DEAD!!!");
+
+				// System.out.println(player.fieldVis());
+
+				// for(int i=0; i<enemies.size();i++) {
+				// System.out.println(enemies.get(i).fieldVis());
+				// }
+
 			}
-		}else{
+		} else {
 			p.shotIntoWater(target);
-			//system.out.println("shot into water!");
+			// system.out.println("shot into water!");
 		}
-		
-		if(draw) drawField();
-		
+
+		if (draw)
+			drawField();
+
 	}
 
 	/*
@@ -227,7 +283,8 @@ public class Game implements NotifyCallback {
 	 */
 	public Player getDaddy(ID id) {
 		Player res = null;
-		if(player.isMyNode(id))res=player;
+		if (player.isMyNode(id))
+			res = player;
 		for (Player p : enemies) {
 			if (p.isMyNode(id)) {
 				res = p;
@@ -239,24 +296,25 @@ public class Game implements NotifyCallback {
 	}
 
 	public void play() {
-		
-		System.out.println("Found "+enemies+" ENEMIES!!!! DIIIIIIEEEEEEE!!!");
-		
+
+		System.out.println("Found " + enemies
+				+ " ENEMIES!!!! DIIIIIIEEEEEEE!!!");
+
 		Collections.sort(enemies);
-	//	if(chord.getID().compareTo(enemies.get(enemies.size()-1).getId()) > 0 ){
+		// if(chord.getID().compareTo(enemies.get(enemies.size()-1).getId()) > 0
+		// ){
 		randomStrat();
-	//	}
-	
+		// }
+
 	}
 
 	public void randomStrat() {
-		
+
 		int ship = (int) (Math.random() * enemies.size());
 		int area = (int) (Math.random() * Game.I);
-		
-		System.out.println(chord.getURL()
-				+ "\n\t shoots at ship: " + enemies.get(ship).toString()
-				+ "\n\t and area: " + area);
+
+		System.out.println(chord.getURL() + "\n\t shoots at ship: "
+				+ enemies.get(ship).toString() + "\n\t and area: " + area);
 		chord.retrieve(enemies.get(ship).getIDFromNum(area));
 		try {
 			Thread.sleep(2000);
@@ -276,11 +334,11 @@ public class Game implements NotifyCallback {
 	public String getString() {
 		return (chord.getURL().toString());
 	}
-	
-	public void drawField(){
-		String field=player.fieldVis().concat("\n");
-		for(Player p: this.enemies){
-			field=field.concat(p.fieldVis().concat("\n"));
+
+	public void drawField() {
+		String field = player.fieldVis().concat("\n");
+		for (Player p : this.enemies) {
+			field = field.concat(p.fieldVis().concat("\n"));
 		}
 		gui.txtrLog.setText("");
 		gui.txtrLog.setText(field);
