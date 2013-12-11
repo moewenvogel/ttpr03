@@ -1,91 +1,98 @@
-import java.awt.EventQueue;
-import java.io.ObjectInputStream.GetField;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.swing.text.FieldView;
-
 import de.uniba.wiai.lspi.chord.com.Node;
-import de.uniba.wiai.lspi.chord.console.command.Exit;
 import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
 import de.uniba.wiai.lspi.chord.service.PropertiesLoader;
 import de.uniba.wiai.lspi.chord.service.impl.ChordImpl;
-import de.uniba.wiai.lspi.chord.service.impl.NodeImpl;
 import de.uniba.wiai.lspi.util.logging.Logger;
 
 public class Game implements NotifyCallback {
-	public static Gui gui;
-	public boolean local = true;
-	// Interval
+	
+	// Interval size
 	public static final int I = 100;
 	// Ships
 	public static final int S = 10;
+	// what ist that?
 	boolean draw = false;
-	public static ConcurrentHashMap<ID, Integer> testcounter = new ConcurrentHashMap<ID, Integer>();
+	// Adress amount of the game
 	public static final BigInteger ADDRESS_AMOUNT = (new BigInteger("2"))
-			.pow(160);
-	ChordImpl chord;
-	Logger logger;
-	Player player;
-	List<Player> enemies = new ArrayList<Player>();
+	.pow(160);
+	
+	// URI
+	public final static String localhost = "127.0.0.1";
+	public final boolean local;
+		
+	// testcounter for standardbroadcasttest
+	public static ConcurrentHashMap<ID, Integer> testcounter = new ConcurrentHashMap<ID, Integer>();
+		
+	// Working vars
+	private ChordImpl chord;
+	private Logger logger;
+	private Player player;
+	private List<Player> enemies = new ArrayList<Player>();
+	public static Gui gui;
 
 
 	public static void main(String[] args) throws Exception {
 		testNetwork();
 	}
-
-	private Game(int localPort, boolean isCreator, boolean local) throws Exception {
-
+	
+	private Game(String host,int port,String bootHost,int bootPort, boolean local) throws Exception {
 		this.local = local;
-		PropertiesLoader.loadPropertyFile();
+		initGame();
+		chord.join(url(host,port), url(bootHost,bootPort));
+	}
 
+	private Game(String host,int port, boolean local) throws Exception {
+		this.local = local;
+		initGame();
+		chord.create(url(host,port));
+	}
+	
+	private void initGame() throws Exception{
+		PropertiesLoader.loadPropertyFile();
 		chord = new ChordImpl();
 		chord.setCallback(this);
-
 		this.logger = Logger.getLogger(ChordImpl.class.getName()
 				+ ".unidentified");
-
-		if (local) {
-			String protocol = URL.KNOWN_PROTOCOLS.get(URL.LOCAL_PROTOCOL);
-			// URL localUrl = new URL(protocol +
-			// "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
-			URL localUrl = new URL(protocol + "://127.0.0.1:" + localPort + "/");
-			URL bootstrapUrl = new URL(protocol + "://127.0.0.1:2000/");
-			if (isCreator) {
-				chord.create(bootstrapUrl);
-			} else {
-				chord.join(localUrl, bootstrapUrl);
-			}
-		} else {
-			String protocol = URL.KNOWN_PROTOCOLS.get(URL.SOCKET_PROTOCOL);
-			// URL localUrl = new URL(protocol +
-			// "://127.0.0."+(int)(Math.random()*200+1)+":"+localPort +"/");
-			URL localUrl = new URL(protocol + "://141.22.64.99:" + localPort
-					+ "/");
-			URL bootstrapUrl = new URL(protocol + "://141.22.95.8:1234/");
-			if (isCreator) {
-				chord.create(bootstrapUrl);
-			} else {
-				chord.join(localUrl, bootstrapUrl);
-			}
-		}
-
+	}
+	
+	private String initProtocol(){
+		if (local)
+			return URL.KNOWN_PROTOCOLS.get(URL.LOCAL_PROTOCOL);
+		else
+			return URL.KNOWN_PROTOCOLS.get(URL.SOCKET_PROTOCOL);
+	}
+	
+	private URL url(String host,int localPort) throws Exception{
+		if(local)
+			return new URL(initProtocol() + "://"+host+":" + localPort + "/");
+		else
+			return new URL(initProtocol() + "://"+host+":" + localPort + "/");
 	}
 
-	public static Game game(int localPort,boolean local) throws Exception {
-		return new Game(localPort, false,local);
+	public static Game creatorNetwork(String host,int localPort) throws Exception {
+		return new Game(host,localPort,false);
+	}
+	
+	public static Game creatorLocal(int localPort) throws Exception {
+		return new Game(localhost,localPort,true);
 	}
 
-	public static Game creator(int localPort,boolean local) throws Exception {
-		return new Game(localPort, true,local);
+	public static Game gameNetwork(String host,int port,String boothost,int bootPort) throws Exception {
+		return new Game(host,port,boothost,bootPort,false);
+	}
+	
+	public static Game gameLocal(int port,int bootPort) throws Exception {
+		return new Game(localhost,port,localhost,bootPort,true);
 	}
 
 	public void init() {
@@ -106,29 +113,21 @@ public class Game implements NotifyCallback {
 		Collections.sort(enemies);
 	}
 
-	public static boolean isFirst(String[] args) {
-		if (args == null) {
-			return false;
-		} else if (args.length > 0 && args[0].equals("first")) {
-			System.out.println("first");
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	public static void testNetwork() throws Exception {
-		boolean local = false;
+		String host = "141.22.64.99";
+		int port = 2000;
+		String bootHost = "141.22.95.8";
+		int bootPort = 1234;
+		
 		gui = new Gui();
 		gui.frame.setVisible(true);
 
-		int baseport = 8080;
 		List<Game> cbs = new ArrayList<Game>();
 
-		// Game creator = creator(baseport);
-		// cbs.add(creator);
+//		 Game creator = creatorNetwork(bootHost,bootPort);
+//		 cbs.add(creator);
 
-		Game player = game(2000,local);
+		Game player = gameNetwork(host,port,bootHost,bootPort);
 		cbs.add(player);
 
 		cbs.get(0).draw = true;
@@ -162,19 +161,18 @@ public class Game implements NotifyCallback {
 	}
 
 	public static void testLocal() throws Exception {
-		boolean local = true;
 		gui = new Gui();
 		gui.frame.setVisible(true);
 
 		int testAmount = 10;
-		int baseport = 8080;
+		int bootPort = 2000;
 		List<Game> cbs = new ArrayList<Game>();
 
-		Game cb1 = creator(baseport,local);
+		Game cb1 = creatorLocal(bootPort);
 		cbs.add(cb1);
 
 		for (int i = 1; i < testAmount; i++) {
-			Game cb = game(2000 + i,local);
+			Game cb = gameLocal(2000 + i,bootPort);
 			cbs.add(cb);
 		}
 
