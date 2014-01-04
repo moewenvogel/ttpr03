@@ -13,7 +13,7 @@ import ch.aplu.jgamegrid.Location;
 public class BattleshipGui extends GameGrid {
 	
 	// imagesize of cells in px
-	public final static int imagesize = 60;
+	public final static int imagesize = 25;
 
 	private static final long serialVersionUID = 7378323006789259694L;
 
@@ -24,7 +24,7 @@ public class BattleshipGui extends GameGrid {
 	}
 
 	public BattleshipGui() {
-		super(10, 10, imagesize, java.awt.Color.black, "images/background.gif");
+		super(50, 18, imagesize, java.awt.Color.black, "images/backgroundbig.gif");
 		setTitle("Battleship");
 	} 
 	
@@ -51,4 +51,7 @@ public class BattleshipGui extends GameGrid {
 		addActor(new NotHit(), new Location(e.ships(), e.player()));
 	}
 	
+	public static String imagefolder(){
+		return imagesize+"x"+imagesize;
+	}
 }

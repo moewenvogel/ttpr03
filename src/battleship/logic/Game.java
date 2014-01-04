@@ -24,9 +24,9 @@ import de.uniba.wiai.lspi.util.logging.Logger;
 public class Game implements NotifyCallback {
 
 	// Interval size
-	public static final int I = 100;
+	public static final int I = 50;
 	// Ships
-	public static final int S = 10;
+	public static final int S = 8;
 	// what ist that?
 	boolean draw = false;
 	// Adress amount of the game
@@ -175,7 +175,7 @@ public class Game implements NotifyCallback {
 
 	public static void testLocal() {
 
-		int testAmount = 10;
+		int testAmount = 15;
 		int bootPort = 2000;
 		List<Game> cbs = new ArrayList<Game>();
 
@@ -304,7 +304,7 @@ public class Game implements NotifyCallback {
 		Collections.sort(enemies);
 		// Init the GUI with amount of ships (x-axis) and players (y-axis)
 		Battleship.bus().post(
-				InitEvent.valueOf(enemies.size()+1, chord.getRing().size()));
+				InitEvent.valueOf(I,enemies.size()+1));
 		randomStrat();
 	}
 

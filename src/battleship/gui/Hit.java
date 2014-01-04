@@ -5,7 +5,7 @@ import ch.aplu.jgamegrid.Actor;
 public class Hit extends Actor {
 
 	public Hit() {
-		super("images/hit.png");
+		super("images/"+BattleshipGui.imagefolder()+"/hit.png");
 	}
 
 }
