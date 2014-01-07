@@ -55,7 +55,6 @@ import de.uniba.wiai.lspi.chord.data.ID;
 import de.uniba.wiai.lspi.chord.data.URL;
 import de.uniba.wiai.lspi.chord.service.NotifyCallback;
 import de.uniba.wiai.lspi.util.logging.Logger;
-
 /**
  * Implements all operations which can be invoked remotely by other nodes.
  * 
@@ -450,78 +449,92 @@ public final class NodeImpl extends Node {
 
 	private final Semaphore semaphore=new Semaphore(1);
 	Vector<Integer> usedTrns=new Vector<Integer>();	
+
 	@Override
 	public final void broadcast(Broadcast info1) throws CommunicationException {
 		try {
-		semaphore.acquire();
+			semaphore.acquire();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		try{
-		final Broadcast info=info1;
-		  // asynchronos send broadcast message to current node
-		List<Node> ft=impl.getFingerTable();
-		Collections.sort(ft);
-		if (!(usedTrns.contains(info1.getTransaction()))){
-			usedTrns.add(info1.getTransaction());
-			if(info.getTransaction() > impl.last_transaction){
-				
-				impl.last_transaction=info.getTransaction();
-			}
-		}else{
-			// do not comment out, seems to be important to get the threads working withoud loosing outputs... somewhat strange.....
-			System.out.println("node: "+impl.getURL()+"local transaction number: "+impl.last_transaction+", got: "+info.getTransaction()+" , return");
-			return;
-		}
+		try {
+			final Broadcast info = info1;
+			// asynchronos send broadcast message to current node
+			List<Node> ft = impl.getFingerTable();
+			Collections.sort(ft);
+			if (!(usedTrns.contains(info1.getTransaction()))) {
+				usedTrns.add(info1.getTransaction());
+				if (info.getTransaction() > impl.last_transaction) {
 
-		
-		BigInteger	DistanceHereMaxRange=getDistance(getNodeID(), info.getRange());
-		
-		for(int i=0; i<ft.size()-1;i++){
-			Node check_node=ft.get(i);
-			
-			BigInteger	DistanceHereFTNode=getDistance(getNodeID(), check_node.getNodeID());
-			BigInteger  DistanceHereNextEntry=getDistance(getNodeID(),ft.get(i+1).getNodeID());
-			
-			//sending to ft-node with nextnext node as max range. 
-			if(	DistanceHereFTNode.compareTo(DistanceHereMaxRange)<0
-					&&
-				DistanceHereNextEntry.compareTo(DistanceHereMaxRange)<0
-					){
-				
-				asyncSend(new Broadcast(ft.get(i+1).getNodeID(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), check_node);
-			} else if(
-				DistanceHereFTNode.compareTo(DistanceHereMaxRange)<=0
-					&&
-				DistanceHereNextEntry.compareTo(DistanceHereMaxRange)>=0
-				){
-			//sending to ft node with maxrange as range
-				asyncSend(new Broadcast(info.getRange(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), check_node);
-			} else if(
-				//max range is before the ft-node
-				DistanceHereFTNode.compareTo(DistanceHereMaxRange)>0
-					){
-		//		System.out.println("do nothing because the ft node is after the max range ");
+					impl.last_transaction = info.getTransaction();
+				}
+			} else {
+				// do not comment out, seems to be important to get the threads
+				// working withoud loosing outputs... somewhat strange.....
+				System.out.println("node: " + impl.getURL()
+						+ "local transaction number: " + impl.last_transaction
+						+ ", got: " + info.getTransaction() + " , return");
+				return;
 			}
-			else {
-		//		System.out.println("something unexpected, send nothing");
-				//asyncSend(new Broadcast(info.getRange(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), check_node);
+
+			BigInteger DistanceHereMaxRange = getDistance(getNodeID(),
+					info.getRange());
+
+			for (int i = 0; i < ft.size() - 1; i++) {
+				Node check_node = ft.get(i);
+
+				BigInteger DistanceHereFTNode = getDistance(getNodeID(),
+						check_node.getNodeID());
+				BigInteger DistanceHereNextEntry = getDistance(getNodeID(), ft
+						.get(i + 1).getNodeID());
+
+				// sending to ft-node with nextnext node as max range.
+				if (DistanceHereFTNode.compareTo(DistanceHereMaxRange) < 0
+						&& DistanceHereNextEntry
+								.compareTo(DistanceHereMaxRange) < 0) {
+
+					asyncSend(
+							new Broadcast(ft.get(i + 1).getNodeID(),
+									info.getSource(), info.getTarget(),
+									info.getTransaction(), info.getHit()),
+							check_node);
+				} else if (DistanceHereFTNode.compareTo(DistanceHereMaxRange) <= 0
+						&& DistanceHereNextEntry
+								.compareTo(DistanceHereMaxRange) >= 0) {
+					// sending to ft node with maxrange as range
+					asyncSend(
+							new Broadcast(info.getRange(), info.getSource(),
+									info.getTarget(), info.getTransaction(),
+									info.getHit()), check_node);
+				} else if (
+				// max range is before the ft-node
+				DistanceHereFTNode.compareTo(DistanceHereMaxRange) > 0) {
+					// System.out.println("do nothing because the ft node is after the max range ");
+				} else {
+					// System.out.println("something unexpected, send nothing");
+					// asyncSend(new Broadcast(info.getRange(),
+					// info.getSource(), info.getTarget(),
+					// info.getTransaction(), info.getHit()), check_node);
+				}
 			}
-		}
-		
-		//send message the last entry in fingertable
-	//	BigInteger DistancetoLastNode=getDistance(getNodeID(), ft.get(ft.size()-1).getNodeID());
-	//	if(DistancetoLastNode.compareTo(DistanceHereMaxRange)>=0){
-		
-			asyncSend(new Broadcast(info.getRange(), info.getSource(), info.getTarget(), info.getTransaction(), info.getHit()), ft.get(ft.size()-1));
-			
-	//	}
-		
-			
-		// finally inform application
-		if (this.notifyCallback != null) {
-			this.notifyCallback.broadcast(info.getSource(), info.getTarget(), info.getHit());
-		}
+
+			// send message the last entry in fingertable
+			// BigInteger DistancetoLastNode=getDistance(getNodeID(),
+			// ft.get(ft.size()-1).getNodeID());
+			// if(DistancetoLastNode.compareTo(DistanceHereMaxRange)>=0){
+
+			asyncSend(
+					new Broadcast(info.getRange(), info.getSource(),
+							info.getTarget(), info.getTransaction(),
+							info.getHit()), ft.get(ft.size() - 1));
+
+			// }
+
+			// finally inform application
+			if (this.notifyCallback != null) {
+				this.notifyCallback.broadcast(info.getSource(),
+						info.getTarget(), info.getHit());
+			}
 		} finally {
 			semaphore.release();
 		}

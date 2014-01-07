@@ -1,5 +1,4 @@
 package battleship.logic;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,8 +28,9 @@ public class Player  implements Comparable<Player>{
 	private Set<Integer> emptyWater= new HashSet<Integer>();
 	boolean local=false;
 	public Map<Integer,Boolean> field=new HashMap<Integer,Boolean>();
-	
-
+	int undiscoveredShips=Game.S;
+	int backshooting=1;
+	int allShooting=1;
 	public Player(ID node, URL url, ID minRespID){
 		
 		id=node;
@@ -68,6 +68,7 @@ public class Player  implements Comparable<Player>{
 		boolean hit=field.get(area).booleanValue();
 		if(hit){
 			sunkenShips.add(area);
+			undiscoveredShips--;
 		}else{
 			emptyWater.add(area);
 		}
@@ -84,7 +85,8 @@ public class Player  implements Comparable<Player>{
 		return ships;
 	}
 	
-	public List<Integer> getAllWater(){
+	
+	public List<Integer> getAllNotShips(){
 		List<Integer> ships=new ArrayList<Integer>();
 		for(Map.Entry<Integer,Boolean> entry:field.entrySet()){
 			if(!entry.getValue()){
@@ -147,7 +149,7 @@ public class Player  implements Comparable<Player>{
 	
 	public String getStatusString(){
 		String r=this.toString();
-		return r+"\n\t[alive: "+(Game.S-this.sunkenShips.size())+"]\n\t[unknown water left: "+(Game.I-this.sunkenShips.size()-this.getAllWater().size());
+		return r+"\n\t[alive: "+(Game.S-this.sunkenShips.size())+"]\n\t[unknown water left: "+(Game.I-this.sunkenShips.size()-this.getAllNotShips().size());
 	}
 
 	public boolean isMyNode(ID id){
@@ -159,6 +161,14 @@ public class Player  implements Comparable<Player>{
 		}else {
 			return false;
 		}
+	}
+	
+	public double getWaterShipsRatio(){
+		return this.getAllNotShips().size()/undiscoveredShips;
+	}
+	
+	public double getBackshootingRatio(){
+		return backshooting/allShooting;
 	}
 	
 	public String fieldVis(){

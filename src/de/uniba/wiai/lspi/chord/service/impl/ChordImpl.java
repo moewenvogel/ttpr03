@@ -1029,12 +1029,12 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 		return this.references.printFingerTable();
 	}
 	
-	public final List<Node> getFingerTable() {
-		return this.references.getFingerTableEntries();
-	}
-
 	public final String printSuccessorList() {
 		return this.references.printSuccessorList();
+	}
+
+	public final List<Node> getFingerTable() {
+		return this.references.getFingerTableEntries();
 	}
 
 	public final String printReferences() {
@@ -1130,7 +1130,6 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 		} catch (CommunicationException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	/*
@@ -1140,30 +1139,36 @@ public final class ChordImpl implements Chord, Report, AsynChord {
 	private BigInteger ADDRESS_AMOUNT=new BigInteger("2").pow(160);
 	public Map<Node, ID> getRing(){
 		
+		//in the temporary map are only IDs for convenience in the calculations
 		Map<ID,ID> ring=new HashMap<ID,ID>();
 		
 		Node cur_node=localNode;
+		//find successor for range after myself
 		Node node_succ=findSuccessor( ID.valueOf(getID().toBigInteger().add(new BigInteger("1")).mod(ADDRESS_AMOUNT)));
 		ID addressRange;//=getPredecessorID();
-		ID myPred=getPredecessorID();
 		System.out.println("successor is: "+node_succ);
 		ID first=null;
-	//	ring.put(cur_node, addressRange);
 		do{
 
 			//find range 
 			addressRange=ID.valueOf((cur_node.getNodeID().toBigInteger().add(new BigInteger("1"))).mod(ADDRESS_AMOUNT));
 			ring.put(node_succ.getNodeID(), addressRange);
+			
+			//for checking if the ring is completed
 			if(first==null)first=node_succ.getNodeID();
 			cur_node=node_succ;
 	
+			//find successor for range after current node
 			node_succ=findSuccessor(ID.valueOf( (node_succ.getNodeID().toBigInteger().add(new BigInteger("1")))));//.mod(ADDRESS_AMOUNT)));
 			
 			System.out.println("successor is: "+node_succ.getNodeID());
 		
 		}while(!node_succ.getNodeID().equals(first));
-		//while(!ring.containsKey(getID()));
+		//stop if the ring is completed
+
 		
+		//now translating the ID Ranges in Node-ID Pairs
+		// nice to work with within the game
 		Map<Node, ID> res=new HashMap<Node, ID>();
 		
 		for(java.util.Map.Entry<ID,ID> entry: ring.entrySet()){

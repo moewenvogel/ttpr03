@@ -3,9 +3,12 @@ package battleship.logic;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import battleship.Battleship;
@@ -45,6 +48,10 @@ public class Game implements NotifyCallback {
 	private Logger logger;
 	private Player player;
 	private List<Player> enemies = new ArrayList<Player>();
+
+	private Player shotAtMe = null;
+	private Player lastTarget = null;
+	private Player lastShooter = null;
 
 	public static void main(String[] args) {
 		testLocal();
@@ -230,6 +237,7 @@ public class Game implements NotifyCallback {
 
 	@Override
 	public void retrieved(ID target) {
+		shotAtMe=getDaddy(target);
 		sleep(2000);
 		System.out.println("got hit! " + this.chord.getURL() + " and shot: "
 				+ player.gotShot(target));
@@ -239,7 +247,8 @@ public class Game implements NotifyCallback {
 		chord.broadcast(target, shotShip);
 
 		if (player.getSunkenShips().size() < Game.S) {
-			randomStrat();
+			//randomStrat();
+			prioStrat();
 		} else {
 			System.out.println(player.fieldVis());
 			for (int i = 0; i < enemies.size(); i++) {
@@ -247,12 +256,13 @@ public class Game implements NotifyCallback {
 			}
 		}
 	}
-	
-	private int idOfPlayer(Player p){
+
+	private int idOfPlayer(Player p) {
 		Integer i = enemies.indexOf(p);
 		if (i == null && p == player)
 			return 0;// first is player
-		else return i+1;
+		else
+			return i + 1;
 	}
 
 	@Override
@@ -267,19 +277,39 @@ public class Game implements NotifyCallback {
 				+ target.toString() + "which was " + (hit ? "hit" : "not hit"));
 
 		Player p = getDaddy(target);
-		
+
 		if (hit) {
 			boolean last = p.sunkShip(target);
-			Battleship.bus().post(HitEvent.valueOf(p.getNumFromID(target),idOfPlayer(p)));
+			Battleship.bus().post(
+					HitEvent.valueOf(p.getNumFromID(target), idOfPlayer(p)));
 			if (last) {
 				System.out.println("WAS LAST SHIP!!! " + p.toString()
 						+ " IS DEAD!!!");
+				if (p.equals(this.player)) {
+					System.out.println("I WOOOON!!!!!!! YEAAAAAAAHHHH!!!!!!");
+				}
 
 			}
 		} else {
 			p.shotIntoWater(target);
-			Battleship.bus().post(NotHitEvent.valueOf(p.getNumFromID(target),idOfPlayer(p)));
+			Battleship.bus().post(
+					NotHitEvent.valueOf(p.getNumFromID(target), idOfPlayer(p)));
 		}
+
+		// remember backshooting
+		setBackshooter(getDaddy(source), p);
+	}
+
+	private void setBackshooter(Player shooter, Player target) {
+
+		shooter.allShooting++;
+		if (lastTarget != null) {
+			if (target.equals(lastShooter)) {
+				shooter.backshooting++;
+			}
+		}
+		lastTarget = target;
+		lastShooter = shooter;
 	}
 
 	/*
@@ -303,18 +333,81 @@ public class Game implements NotifyCallback {
 		System.out.println("Found " + enemies + " ENEMIES");
 		Collections.sort(enemies);
 		// Init the GUI with amount of ships (x-axis) and players (y-axis)
-		Battleship.bus().post(
-				InitEvent.valueOf(I,enemies.size()+1));
-		randomStrat();
+		Battleship.bus().post(InitEvent.valueOf(I, enemies.size() + 1));
+		//randomStrat();
+		prioStrat();
 	}
 
 	public void randomStrat() {
-		int ship = (int) (Math.random() * enemies.size());
-		int area = (int) (Math.random() * Game.I);
+		Player player = enemies.get((int) (Math.random() * enemies.size()));
+		int area = player.getAllNotShips().get(
+				(int) (Math.random() * player.getAllNotShips().size()));
 
 		System.out.println(chord.getURL() + "\n\t shoots at ship: "
-				+ enemies.get(ship).toString() + "\n\t and area: " + area);
-		chord.retrieve(enemies.get(ship).getIDFromNum(area));
+				+ player.toString() + "\n\t and area: " + area);
+		chord.retrieve(player.getIDFromNum(area));
+		sleep(2000);
+	}
+
+	public void prioStrat() {
+		
+		// next default target is the one who shot at me, or if i am the first,
+		// than a random player.
+		// (also) lowest priority
+		Player target = (this.shotAtMe == null ? enemies.get((int) (Math
+				.random() * enemies.size())) : shotAtMe);
+		int area = target.getAllNotShips().get(
+				(int) (Math.random() * target.getAllNotShips().size()));
+
+		TreeMap<Player, Double> backshooting = getBackshootingMap();
+		TreeMap<Player, Double> shipCounts = getShipCountMap();
+
+		// the following target selection is only working if the first shoots
+		// already happended
+
+		if (shotAtMe != null) {
+
+			Entry<Player, Double> first_backshooter = backshooting.firstEntry();
+			Entry<Player, Double> lowestShipRatePlayer = shipCounts.lastEntry();
+
+			// highest priority - somebody who shoots back
+			if (first_backshooter.getValue() >= 0.99) {
+				target = first_backshooter.getKey();
+				System.out.println("found backshooting partner:");
+				System.out.println("my ratio"
+						+ this.player.getWaterShipsRatio() + " his ratio: "
+						+ target.getWaterShipsRatio() + " win propability: "
+						+ player.getWaterShipsRatio()
+						/ target.getWaterShipsRatio());
+			}
+			//somebody with one rest ship and higher propabiliy than the best backshooter
+			else if(lowestShipRatePlayer.getKey().getAllShips().size()==9 &&
+					 lowestShipRatePlayer.getKey().getWaterShipsRatio() > first_backshooter
+					.getValue()) {
+				target=lowestShipRatePlayer.getKey();
+				
+			}
+			/*
+			 * assumption: not always shooting back --> he only shoots back at
+			 * weaker enemys, but this is good enough --> find one who has a
+			 * better ratio than me so that he will shoot back at me 
+			 * - third highest priority
+			 */
+			else if(first_backshooter.getValue() > 0.5) {
+				for (Entry<Player, Double> e : backshooting.entrySet()) {
+					if (e.getKey().getWaterShipsRatio() >= this.player
+							.getWaterShipsRatio()) {
+						target = e.getKey();
+						break;
+					}
+				}
+			}
+
+		}
+
+		System.out.println(chord.getURL() + "\n\t shoots at ship: "
+				+ player.toString() + "\n\t and area: " + area);
+		chord.retrieve(target.getIDFromNum(area));
 		sleep(2000);
 	}
 
@@ -335,5 +428,60 @@ public class Game implements NotifyCallback {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private TreeMap<Player, Double> getBackshootingMap() {
+		Map<Player, Double> backshootingRatios = new HashMap<Player, Double>();
+		for (Player p : enemies) {
+			backshootingRatios.put(p, p.getBackshootingRatio());
+		}
+		ValueComparator bvc = new ValueComparator(backshootingRatios);
+		TreeMap<Player, Double> sortedBackshooting = new TreeMap<Player, Double>(
+				bvc);
+		sortedBackshooting.putAll(backshootingRatios);
+		return sortedBackshooting;
+	}
+
+	private TreeMap<Player, Double> getRatioMap() {
+		Map<Player, Double> ratios = new HashMap<Player, Double>();
+		for (Player p : enemies) {
+			ratios.put(p, p.getWaterShipsRatio());
+		}
+		ValueComparator bvc = new ValueComparator(ratios);
+		TreeMap<Player, Double> sortedRatio = new TreeMap<Player, Double>(bvc);
+		sortedRatio.putAll(ratios);
+		return sortedRatio;
+	}
+
+	private TreeMap<Player, Double> getShipCountMap() {
+		Map<Player, Double> shipCount = new HashMap<Player, Double>();
+		for (Player p : enemies) {
+			shipCount.put(p, new Double(p.undiscoveredShips));
+		}
+		ValueComparator bvc = new ValueComparator(shipCount);
+		TreeMap<Player, Double> sortedShipCount = new TreeMap<Player, Double>(
+				bvc);
+		sortedShipCount.putAll(shipCount);
+		return sortedShipCount;
+	}
+
+}
+
+class ValueComparator implements Comparator<Player> {
+
+	Map<Player, Double> base;
+
+	public ValueComparator(Map<Player, Double> map) {
+		this.base = map;
+	}
+
+	// Note: this comparator imposes orderings that are inconsistent with
+	// equals.
+	public int compare(Player a, Player b) {
+		if (base.get(a) >= base.get(b)) {
+			return -1;
+		} else {
+			return 1;
+		} // returning 0 would merge keys
 	}
 }
