@@ -115,7 +115,8 @@ public class Player  implements Comparable<Player>{
 		BigInteger oneFieldSize=sizeOfAdresspace.divide(new BigInteger( Integer.toString(Game.I)));
 		ID fieldID=ID.valueOf(( (oneFieldSize.multiply(new BigInteger(Integer.toString(num))))
 														.add(this.minRespID.toBigInteger())
-														.add(BigInteger.ONE)
+														//.add(BigInteger.ONE)
+														.add(oneFieldSize.divide(new BigInteger("2")))
 														)
 														.mod(Game.ADDRESS_AMOUNT)
 				);
