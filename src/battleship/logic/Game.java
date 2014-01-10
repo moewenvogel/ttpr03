@@ -52,7 +52,7 @@ public class Game implements NotifyCallback {
 	private Player shotAtMe = null;
 	private Player lastTarget = null;
 	private Player lastShooter = null;
-	static List<Game> cbs;
+
 
 	private Game(String host, int port, String bootHost, int bootPort,
 			boolean local) {
@@ -140,24 +140,16 @@ public class Game implements NotifyCallback {
 		String bootHost = "141.22.28.156";
 		int bootPort = 2000;
 
-		cbs = new ArrayList<Game>();
+		List<Game> cbs = new ArrayList<Game>();
 
-		Game player = creatorNetwork(bootHost,bootPort);
-		cbs.add(player);
+		 Game player = creatorNetwork(bootHost,bootPort);
+		 cbs.add(player);
 
 //		Game player = gameNetwork(host, port, bootHost, bootPort);
 //		cbs.add(player);
 
-		//sleep(5000);
-		
-	
-	
-		// cbs.get(0).play();
+		sleep(5000);
 
-		// standardbroadcasttest(cbs);
-	}
-	
-	public static void startGameFromGui(){
 		for (Game g : cbs) {
 			g.printFT();
 			g.init();
@@ -174,8 +166,11 @@ public class Game implements NotifyCallback {
 			
 		}
 
-	}
 	
+		// cbs.get(0).play();
+
+		// standardbroadcasttest(cbs);
+	}
 
 	public static void testLocal() {
 
@@ -194,7 +189,7 @@ public class Game implements NotifyCallback {
 		cbs.get(0).draw = true;
 		sleep(5000);
 
-/*		for (int i = 0; i < testAmount; i++) {
+		for (int i = 0; i < testAmount; i++) {
 			cbs.get(i).printFT();
 			cbs.get(i).init();
 			System.out.println(cbs.get(i).chord.getURL() + " has ships at: ");
@@ -208,7 +203,7 @@ public class Game implements NotifyCallback {
 			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
 		}
 
-		cbs.get(0).play();*/
+		cbs.get(0).play();
 
 		// standardbroadcasttest(cbs);
 	}
