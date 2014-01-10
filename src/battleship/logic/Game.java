@@ -269,6 +269,9 @@ public class Game implements NotifyCallback {
 
 	@Override
 	public void broadcast(ID source, ID target, Boolean hit) {
+		if(!target.equals(player.getId())){
+			shotAtMe=getDaddy(target);
+		}
 		if (testcounter.get(source) != null) {
 			testcounter.put(source, testcounter.get(source) + 1);
 		} else {
@@ -358,7 +361,7 @@ public class Game implements NotifyCallback {
 	private List<Player> getRealEnemies(){
 		List<Player> realEnemies=new ArrayList<Player>();
 		for(Player p:allPlayers){
-			if(!(player.isMyNode(p.getId()))){
+			if(!(p.getId().equals(this.player.getId()))){
 				realEnemies.add(p);
 			}
 		}
@@ -372,20 +375,25 @@ public class Game implements NotifyCallback {
 		// (also) lowest priority
 
 		
+
 		Player target = (this.shotAtMe == null ? enemies.get((int) (Math
 				.random() * enemies.size())) : shotAtMe);
 
 		
 		int area = target.getAllNotShips().get(
 				(int) (Math.random() * target.getAllNotShips().size()));
-
+		
 		TreeMap<Player, Double> backshooting = getBackshootingMap();
 		TreeMap<Player, Double> shipCounts = getShipCountMap();
 
+		
+
+		
 		// the following target selection is only working if the first shoots
 		// already happended
 
 		if (shotAtMe != null) {
+			
 
 			Entry<Player, Double> first_backshooter = backshooting.firstEntry();
 			Entry<Player, Double> lowestShipRatePlayer = shipCounts.lastEntry();
@@ -401,7 +409,7 @@ public class Game implements NotifyCallback {
 						/ target.getWaterShipsRatio());
 			}
 			//somebody with one rest ship and higher propabiliy than the best backshooter
-			else if(lowestShipRatePlayer.getKey().getAllShips().size()==9 &&
+			else if(lowestShipRatePlayer.getKey().getAllShips().size()==Game.S-1 &&
 					 lowestShipRatePlayer.getKey().getWaterShipsRatio() > first_backshooter
 					.getValue()) {
 				target=lowestShipRatePlayer.getKey();
@@ -430,10 +438,10 @@ public class Game implements NotifyCallback {
 		}
 		
 		//For security
-		while(target.getId().equals(this.player.getId())){
+	/*	while(target.getId().equals(this.player.getId())){
 			target=enemies.get((int) (Math.random() * enemies.size()));
 			System.out.println("chose random target for not choosing myself");
-		}
+		}*/
 		System.out.println(chord.getURL() + "\n\t shoots at ship: "
 				+ target.toString() + "\n\t and area: " + area);
 		chord.retrieve(target.getIDFromNum(area));
