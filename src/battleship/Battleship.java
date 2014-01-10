@@ -1,5 +1,6 @@
 package battleship;
 
+import battleship.events.InitEvent;
 import battleship.gui.BattleshipGui;
 import battleship.logic.Game;
 
@@ -12,7 +13,7 @@ public class Battleship {
 	
 	private Battleship(){
 		bus.register(gui);
-		Game.testNetwork();
+		Game.testLocal();
 	}
 	
 	public static Battleship start(){
