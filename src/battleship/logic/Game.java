@@ -227,7 +227,7 @@ public class Game implements NotifyCallback {
 
 	@Override
 	public void retrieved(ID target) {
-		shotAtMe=getDaddy(target);
+		
 		 boolean gotHit=player.gotShot(target);
 		System.out.println("got hit! " + this.chord.getURL() + " and shot: "
 				+ gotHit);
