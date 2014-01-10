@@ -61,7 +61,7 @@ public class Game implements NotifyCallback {
 		try {
 			chord.join(url(host, port), url(bootHost, bootPort));
 		} catch (Exception e) {
-			System.err.println("game dont work");
+			System.err.println("game dont work " + e);
 		}
 	}
 
@@ -71,7 +71,7 @@ public class Game implements NotifyCallback {
 		try {
 			chord.create(url(host, port));
 		} catch (Exception e) {
-			System.err.println("game dont work");
+			System.err.println("game dont work " + e);
 		}
 	}
 
@@ -135,15 +135,15 @@ public class Game implements NotifyCallback {
 	}
 
 	public static void testNetwork() {
-		String host = "141.22.28.156";
+		String host = "141.22.28.165";
 		int port = 2000;
-		String bootHost = "141.22.28.165";
+		String bootHost = "141.22.28.156";
 		int bootPort = 2000;
 
 		List<Game> cbs = new ArrayList<Game>();
 
-		// Game creator = creatorNetwork(bootHost,bootPort);
-		// cbs.add(creator);
+//		 Game creator = creatorNetwork(bootHost,bootPort);
+//		 cbs.add(creator);
 
 		Game player = gameNetwork(host, port, bootHost, bootPort);
 		cbs.add(player);
@@ -155,6 +155,7 @@ public class Game implements NotifyCallback {
 			g.init();
 			System.out.println(g.chord.getURL() + " has ships at: ");
 			System.out.println(g.player.getAllShips());
+			g.play();
 		}
 
 		System.out.println("Players:");
@@ -162,17 +163,10 @@ public class Game implements NotifyCallback {
 			System.out.println(p);
 			System.out.println(p.getNumFromID(p.getId()));
 			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
+			
 		}
 
-		Collections.sort(player.allPlayers);
-		if (player.allPlayers.get(player.allPlayers.size() - 1).compareTo(
-				player.player) < 0) {
-			System.out.println("we are the first");
-			player.play();
-		//	player.broadcast(player.chord.getID(), player.chord.getID(), true);
-		} else
-			System.out.println("we are NOT the first");
-
+	
 		// cbs.get(0).play();
 
 		// standardbroadcasttest(cbs);
@@ -328,13 +322,16 @@ public class Game implements NotifyCallback {
 	}
 
 	public void play() {
-		System.out.println("Found " + allPlayers + " ENEMIES");
-		Collections.sort(allPlayers);
 		// Init the GUI with amount of ships (x-axis) and players (y-axis)
 		Battleship.bus().post(InitEvent.valueOf(I, allPlayers.size() + 1));
-		//randomStrat();
-		
-		prioStrat();
+		System.out.println("Found " + allPlayers + " ENEMIES");
+		Collections.sort(allPlayers);
+		if (allPlayers.get(allPlayers.size() - 1).compareTo(
+				player) < 0) {
+			System.out.println("we are the first");
+			prioStrat();
+			
+		} else System.out.println("we are NOT the first");
 	}
 
 	public void randomStrat() {
