@@ -237,7 +237,7 @@ public class Game implements NotifyCallback {
 	}
 
 	@Override
-	public synchronized void retrieved(ID target) {
+	public void retrieved(ID target) {
 		shotAtMe=getDaddy(target);
 		sleep(1000);
 		System.out.println("got hit! " + this.chord.getURL() + " and shot: "
@@ -401,6 +401,7 @@ public class Game implements NotifyCallback {
 					 lowestShipRatePlayer.getKey().getWaterShipsRatio() > first_backshooter
 					.getValue()) {
 				target=lowestShipRatePlayer.getKey();
+				System.out.println("one ship target!");
 				
 			}
 			
@@ -419,7 +420,7 @@ public class Game implements NotifyCallback {
 					}
 				}
 			}
-
+			System.out.println("new target ist a small-ratio-backshooter");
 		
 		}
 		
