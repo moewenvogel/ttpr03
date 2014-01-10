@@ -50,8 +50,6 @@ public class Game implements NotifyCallback {
 	private List<Player> allPlayers = new ArrayList<Player>();
 	
 	private Player shotAtMe = null;
-	private Player lastTarget = null;
-	private Player lastShooter = null;
 
 
 	private Game(String host, int port, String bootHost, int bootPort,
@@ -269,9 +267,11 @@ public class Game implements NotifyCallback {
 
 	@Override
 	public void broadcast(ID source, ID target, Boolean hit) {
+		
 		if(!target.equals(player.getId())){
 			shotAtMe=getDaddy(target);
 		}
+		
 		if (testcounter.get(source) != null) {
 			testcounter.put(source, testcounter.get(source) + 1);
 		} else {
@@ -302,21 +302,11 @@ public class Game implements NotifyCallback {
 		}
 
 		// remember backshooting
-		setBackshooter(getDaddy(source), p);
+
+
 	}
 
-	private void setBackshooter(Player shooter, Player target) {
-
-		shooter.allShooting++;
-		if (lastTarget != null) {
-			if (target.equals(lastShooter)) {
-				shooter.backshooting++;
-			}
-		}
-		lastTarget = target;
-		lastShooter = shooter;
-	}
-
+	
 	/*
 	 * returns the responsible node for a specific id
 	 */
