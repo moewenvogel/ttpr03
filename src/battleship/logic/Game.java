@@ -230,16 +230,26 @@ public class Game implements NotifyCallback {
 	@Override
 	public void retrieved(ID target) {
 		shotAtMe=getDaddy(target);
-		sleep(1000);
+		 boolean gotHit=player.gotShot(target);
 		System.out.println("got hit! " + this.chord.getURL() + " and shot: "
-				+ player.gotShot(target));
+				+ gotHit);
 		System.out
 				.println("Area which was hit: " + player.getNumFromID(target));
-		boolean shotShip = player.gotShot(target);
-		chord.broadcast(target, shotShip);
 
+		
+		if(gotHit){
+			Battleship.bus().post(
+					HitEvent.valueOf(this.player.getNumFromID(target), idOfPlayer(this.player)));
+		}else{
+			Battleship.bus().post(
+					NotHitEvent.valueOf(this.player.getNumFromID(target), idOfPlayer(this.player)));
+		}
+		
+		chord.broadcast(target, gotHit);
+		
 		if (player.getSunkenShips().size() < Game.S) {
 			//randomStrat();
+			sleep(1000);
 			prioStrat();
 		} else {
 			System.out.println(player.fieldVis());
@@ -413,13 +423,14 @@ public class Game implements NotifyCallback {
 						break;
 					}
 				}
+				System.out.println("new target ist a small-ratio-backshooter");
 			}
-			System.out.println("new target ist a small-ratio-backshooter");
+			
 		
 		}
 		
 		//For security
-		while(target==player){
+		while(target.getId().equals(this.player.getId())){
 			target=enemies.get((int) (Math.random() * enemies.size()));
 			System.out.println("chose random target for not choosing myself");
 		}
@@ -451,8 +462,9 @@ public class Game implements NotifyCallback {
 	private TreeMap<Player, Double> getBackshootingMap() {
 		Map<Player, Double> backshootingRatios = new HashMap<Player, Double>();
 		for (Player p : getRealEnemies()) {
-			
-			backshootingRatios.put(p, p.getBackshootingRatio());
+			if(!p.getId().equals(this.player.getId())) {
+				backshootingRatios.put(p, p.getBackshootingRatio());
+			}
 		}
 		ValueComparator bvc = new ValueComparator(backshootingRatios);
 		TreeMap<Player, Double> sortedBackshooting = new TreeMap<Player, Double>(
@@ -461,21 +473,15 @@ public class Game implements NotifyCallback {
 		return sortedBackshooting;
 	}
 
-	private TreeMap<Player, Double> getRatioMap() {
-		Map<Player, Double> ratios = new HashMap<Player, Double>();
-		for (Player p : getRealEnemies()) {
-			ratios.put(p, p.getWaterShipsRatio());
-		}
-		ValueComparator bvc = new ValueComparator(ratios);
-		TreeMap<Player, Double> sortedRatio = new TreeMap<Player, Double>(bvc);
-		sortedRatio.putAll(ratios);
-		return sortedRatio;
-	}
+	
 
 	private TreeMap<Player, Double> getShipCountMap() {
 		Map<Player, Double> shipCount = new HashMap<Player, Double>();
 		for (Player p : getRealEnemies()) {
-			shipCount.put(p, new Double(p.undiscoveredShips));
+			if(!p.getId().equals(this.player.getId())){
+				shipCount.put(p, new Double(p.undiscoveredShips));
+			}
+			
 		}
 		ValueComparator bvc = new ValueComparator(shipCount);
 		TreeMap<Player, Double> sortedShipCount = new TreeMap<Player, Double>(
