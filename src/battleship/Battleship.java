@@ -12,7 +12,7 @@ public class Battleship {
 	
 	private Battleship(){
 		bus.register(gui);
-		Game.testLocal();
+		Game.testNetwork();
 	}
 	
 	public static Battleship start(){

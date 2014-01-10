@@ -53,9 +53,6 @@ public class Game implements NotifyCallback {
 	private Player lastTarget = null;
 	private Player lastShooter = null;
 
-	public static void main(String[] args) {
-		testLocal();
-	}
 
 	private Game(String host, int port, String bootHost, int bootPort,
 			boolean local) {
@@ -138,10 +135,10 @@ public class Game implements NotifyCallback {
 	}
 
 	public static void testNetwork() {
-		String host = "141.22.64.99";
+		String host = "141.22.28.156";
 		int port = 2000;
-		String bootHost = "141.22.95.8";
-		int bootPort = 1234;
+		String bootHost = "141.22.28.165";
+		int bootPort = 2000;
 
 		List<Game> cbs = new ArrayList<Game>();
 
@@ -171,7 +168,7 @@ public class Game implements NotifyCallback {
 		if (player.allPlayers.get(player.allPlayers.size() - 1).compareTo(
 				player.player) < 0) {
 			System.out.println("we are the first");
-			
+			player.play();
 		//	player.broadcast(player.chord.getID(), player.chord.getID(), true);
 		} else
 			System.out.println("we are NOT the first");
