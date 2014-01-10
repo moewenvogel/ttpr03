@@ -33,11 +33,6 @@ public class BattleshipGui extends GameGrid {
 				"images/backgroundbig.gif");
 		setTitle("Battleship");
 	}
-
-	@Override
-	public void act() {
-		Game.startGameFromGui();	
-	}
 	
 	@Subscribe
 	public void initListener(InitEvent e) {
