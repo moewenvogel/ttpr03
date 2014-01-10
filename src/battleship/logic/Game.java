@@ -142,11 +142,11 @@ public class Game implements NotifyCallback {
 
 		List<Game> cbs = new ArrayList<Game>();
 
-//		 Game creator = creatorNetwork(bootHost,bootPort);
-//		 cbs.add(creator);
+		 Game player = creatorNetwork(bootHost,bootPort);
+		 cbs.add(player);
 
-		Game player = gameNetwork(host, port, bootHost, bootPort);
-		cbs.add(player);
+//		Game player = gameNetwork(host, port, bootHost, bootPort);
+//		cbs.add(player);
 
 		sleep(5000);
 
@@ -258,7 +258,7 @@ public class Game implements NotifyCallback {
 	}
 
 	@Override
-	public synchronized void broadcast(ID source, ID target, Boolean hit) {
+	public void broadcast(ID source, ID target, Boolean hit) {
 		if (testcounter.get(source) != null) {
 			testcounter.put(source, testcounter.get(source) + 1);
 		} else {
@@ -421,6 +421,7 @@ public class Game implements NotifyCallback {
 		//For security
 		while(target==player){
 			target=enemies.get((int) (Math.random() * enemies.size()));
+			System.out.println("chose random target for not choosing myself");
 		}
 		System.out.println(chord.getURL() + "\n\t shoots at ship: "
 				+ target.toString() + "\n\t and area: " + area);
