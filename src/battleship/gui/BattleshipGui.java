@@ -1,17 +1,22 @@
 package battleship.gui;
 
+import java.awt.event.KeyListener;
+
 import battleship.events.HitEvent;
 import battleship.events.InitEvent;
 import battleship.events.NotHitEvent;
+import battleship.logic.Game;
 
 import com.google.common.eventbus.Subscribe;
 
 import ch.aplu.jgamegrid.Actor;
+import ch.aplu.jgamegrid.GGButton;
+import ch.aplu.jgamegrid.GGButtonListener;
 import ch.aplu.jgamegrid.GameGrid;
 import ch.aplu.jgamegrid.Location;
 
 public class BattleshipGui extends GameGrid {
-	
+
 	// imagesize of cells in px
 	public final static int imagesize = 25;
 
@@ -24,34 +29,36 @@ public class BattleshipGui extends GameGrid {
 	}
 
 	public BattleshipGui() {
-		super(50, 18, imagesize, java.awt.Color.black, "images/backgroundbig.gif");
+		super(50, 18, imagesize, java.awt.Color.black,
+				"images/backgroundbig.gif");
 		setTitle("Battleship");
-	} 
+	}
 	
 	@Subscribe
-	public void initListener(InitEvent e){
+	public void initListener(InitEvent e) {
 		System.out.println(e);
 		setNbHorzCells(e.ships());
 		setNbVertCells(e.player());
-		for(Location l: getEmptyLocations()){
+		for (Location l : getEmptyLocations()) {
 			addActor(new CouldBe(), l);
 		}
-		show();	
+		show();
 	}
-	
+
 	@Subscribe
-	public void hitListener(HitEvent e){
+	public void hitListener(HitEvent e) {
 		System.out.println(e);
 		addActor(new Hit(), new Location(e.ships(), e.player()));
 	}
-	
+
 	@Subscribe
-	public void nothitListener(NotHitEvent e){
+	public void nothitListener(NotHitEvent e) {
 		System.out.println(e);
 		addActor(new NotHit(), new Location(e.ships(), e.player()));
 	}
-	
-	public static String imagefolder(){
-		return imagesize+"x"+imagesize;
+
+	public static String imagefolder() {
+		return imagesize + "x" + imagesize;
 	}
+
 }
