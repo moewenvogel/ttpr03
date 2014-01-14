@@ -46,6 +46,7 @@ public class Game implements NotifyCallback {
 	// Working vars
 	private ChordImpl chord;
 	private Logger logger;
+	private Player lastShooter;
 	private Player player;
 	private List<Player> allPlayers = new ArrayList<Player>();
 	
@@ -268,8 +269,10 @@ public class Game implements NotifyCallback {
 	@Override
 	public void broadcast(ID source, ID target, Boolean hit) {
 		
+		
+		
 		if(!target.equals(player.getId())){
-			shotAtMe=getDaddy(target);
+			shotAtMe=getDaddy(source);
 		}
 		
 		if (testcounter.get(source) != null) {
@@ -300,8 +303,9 @@ public class Game implements NotifyCallback {
 			Battleship.bus().post(
 					NotHitEvent.valueOf(p.getNumFromID(target), idOfPlayer(p)));
 		}
-
-		// remember backshooting
+		if(!source.equals(this.player.getId())){
+			lastShooter=getDaddy(source);
+		}
 
 
 	}
@@ -334,7 +338,10 @@ public class Game implements NotifyCallback {
 			System.out.println("we are the first");
 			prioStrat();
 			
-		} else System.out.println("we are NOT the first");
+		} else {
+			System.out.println("we are NOT the first");
+		}
+		lastShooter=allPlayers.get(allPlayers.size()-1);
 	}
 
 	public void randomStrat() {
@@ -366,8 +373,8 @@ public class Game implements NotifyCallback {
 
 		
 
-		Player target = (this.shotAtMe == null ? enemies.get((int) (Math
-				.random() * enemies.size())) : shotAtMe);
+		Player target = (this.lastShooter == null ? enemies.get((int) (Math
+				.random() * enemies.size())) : lastShooter);
 
 		
 		int area = target.getAllNotShips().get(
@@ -382,7 +389,7 @@ public class Game implements NotifyCallback {
 		// the following target selection is only working if the first shoots
 		// already happended
 
-		if (shotAtMe != null) {
+		if (lastShooter != null) {
 			
 
 			Entry<Player, Double> first_backshooter = backshooting.firstEntry();
@@ -392,7 +399,7 @@ public class Game implements NotifyCallback {
 			if (first_backshooter.getValue() >= 0.99) {
 				target = first_backshooter.getKey();
 				System.out.println("found backshooting partner:");
-				System.out.println("my ratio"
+				System.out.println("my ratio "
 						+ this.player.getWaterShipsRatio() + " his ratio: "
 						+ target.getWaterShipsRatio() + " win propability: "
 						+ player.getWaterShipsRatio()

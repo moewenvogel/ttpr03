@@ -28,8 +28,8 @@ public class Player  implements Comparable<Player>{
 	boolean local=false;
 	public Map<Integer,Boolean> field=new HashMap<Integer,Boolean>();
 	int undiscoveredShips=Game.S;
-	int backshooting=1;
-	int allShooting=1;
+	int backshooting=0;
+	int allShooting=0;
 	public Player(ID node, URL url, ID minRespID){
 		
 		id=node;
@@ -164,11 +164,22 @@ public class Player  implements Comparable<Player>{
 	}
 	
 	public double getWaterShipsRatio(){
-		return this.getAllNotShips().size()/undiscoveredShips;
+		return undiscoveredShips/(this.getAllNotShips().size());
 	}
 	
 	public double getBackshootingRatio(){
+		if(allShooting==0){
+			return 0;
+		}else{
 		return backshooting/allShooting;
+		}
+	}
+	
+	public void increaseBackshooting(){
+		this.backshooting++;
+	}
+	public void increaseAllShooting(){
+		this.allShooting++;
 	}
 	
 	public String fieldVis(){
