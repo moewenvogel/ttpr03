@@ -36,6 +36,7 @@ public class Player  implements Comparable<Player>{
 		this.url=url;
 		this.minRespID=minRespID;
 		System.out.println("Hello, my URL is: "+url+" and my ID: "+id+" my min resp"+ this.minRespID);
+		
 	}
 
 	
@@ -164,21 +165,25 @@ public class Player  implements Comparable<Player>{
 	}
 	
 	public double getWaterShipsRatio(){
-		return undiscoveredShips/(this.getAllNotShips().size());
+		return new Double(undiscoveredShips)/new Double(this.getAllNotShips().size());
 	}
 	
 	public double getBackshootingRatio(){
 		if(allShooting==0){
 			return 0;
 		}else{
-		return backshooting/allShooting;
+			//System.out.println("setting allShooting: "+allShooting+" backshooting: "+backshooting);
+			//System.out.println("my backshooting ratio: "+(new Double(backshooting)/new Double(allShooting)));
+		return new Double(backshooting)/new Double(allShooting);
 		}
 	}
 	
 	public void increaseBackshooting(){
+		System.out.println("increase backshooting");
 		this.backshooting++;
 	}
 	public void increaseAllShooting(){
+		System.out.println("increase allshooting");
 		this.allShooting++;
 	}
 	
