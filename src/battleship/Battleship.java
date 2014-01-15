@@ -1,6 +1,7 @@
 package battleship;
 
 import battleship.gui.BattleshipGui;
+import battleship.gui.StartupWindow;
 import battleship.logic.Game;
 
 import com.google.common.eventbus.EventBus;
@@ -8,13 +9,14 @@ import com.google.common.eventbus.EventBus;
 public class Battleship {
 
 	public static final EventBus bus = new EventBus();
-	private final BattleshipGui gui = new BattleshipGui();
+//	private final BattleshipGui gui = new BattleshipGui();
 	
 	private Battleship(){
-		bus.register(gui);
-		
+//		bus.register(gui);
+		new StartupWindow();
+
 		Game.testNetwork();
-		//Game.testLocal();
+//		Game.testLocal();
 	}
 	
 	public static Battleship start(){

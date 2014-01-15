@@ -17,6 +17,7 @@ import ch.aplu.jgamegrid.Location;
 
 public class BattleshipGui extends GameGrid {
 
+	int player;
 	// imagesize of cells in px
 	public final static int imagesize = 25;
 
@@ -37,24 +38,34 @@ public class BattleshipGui extends GameGrid {
 	@Subscribe
 	public void initListener(InitEvent e) {
 		System.out.println(e);
+		player = e.player();
 		setNbHorzCells(e.ships());
-		setNbVertCells(e.player());
+		setNbVertCells(e.player()*2);
 		for (Location l : getEmptyLocations()) {
 			addActor(new CouldBe(), l);
 		}
 		show();
+		setVisible(true);
 	}
 
 	@Subscribe
 	public void hitListener(HitEvent e) {
 		System.out.println(e);
-		addActor(new Hit(), new Location(e.ships(), e.player()));
+		if (e.ships() >= 50){
+			addActor(new Hit(), new Location(e.ships()-50, player+e.player()));
+		}
+		else
+			addActor(new Hit(), new Location(e.ships(), e.player()));
 	}
 
 	@Subscribe
 	public void nothitListener(NotHitEvent e) {
 		System.out.println(e);
-		addActor(new NotHit(), new Location(e.ships(), e.player()));
+		if (e.ships() >= 50){
+			addActor(new NotHit(), new Location(e.ships()-50, player+e.player()));
+		}
+		else
+			addActor(new NotHit(), new Location(e.ships(), e.player()));
 	}
 
 	public static String imagefolder() {

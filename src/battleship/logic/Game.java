@@ -26,6 +26,7 @@ import de.uniba.wiai.lspi.util.logging.Logger;
 
 public class Game implements NotifyCallback {
 		
+	static List<Game> cbs;
 	// Interval size
 	public static final int I = 100;
 	// Ships
@@ -134,21 +135,21 @@ public class Game implements NotifyCallback {
 	}
 
 	public static void testNetwork() {
-		String host = "141.22.28.165";
-		int port = 2000;
-		String bootHost = "141.22.28.156";
-		int bootPort = 2000;
+		String host = "192.168.26.164";
+		int port = 4000;
+		String bootHost = "192.168.26.228";
+		int bootPort = 5000;
 
-		List<Game> cbs = new ArrayList<Game>();
+		cbs = new ArrayList<Game>();
 
-		 Game player = creatorNetwork(bootHost,bootPort);
+		 Game player = creatorNetwork(host,port);
 		 cbs.add(player);
 
 //		Game player = gameNetwork(host, port, bootHost, bootPort);
 //		cbs.add(player);
-
-		sleep(5000);
-
+	}
+	
+	public static void run(){
 		for (Game g : cbs) {
 			g.printFT();
 			g.init();
@@ -162,20 +163,14 @@ public class Game implements NotifyCallback {
 			System.out.println(p);
 			System.out.println(p.getNumFromID(p.getId()));
 			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
-			
 		}
-
-	
-		// cbs.get(0).play();
-
-		// standardbroadcasttest(cbs);
 	}
 
 	public static void testLocal() {
 
 		int testAmount = 5;
 		int bootPort = 2000;
-		List<Game> cbs = new ArrayList<Game>();
+		cbs = new ArrayList<Game>();
 
 		Game cb1 = creatorLocal(bootPort);
 		cbs.add(cb1);
@@ -186,23 +181,24 @@ public class Game implements NotifyCallback {
 		}
 
 		cbs.get(0).draw = true;
-		sleep(5000);
+//		sleep(5000);
+//
+//		for (int i = 0; i < testAmount; i++) {
+//			cbs.get(i).printFT();
+//			cbs.get(i).init();
+//			System.out.println(cbs.get(i).chord.getURL() + " has ships at: ");
+//			System.out.println(cbs.get(i).player.getAllShips());
+//			cbs.get(i).play();
+//		}
+//
+//		System.out.println("Players:");
+//		for (Player p : cbs.get(0).allPlayers) {
+//			System.out.println(p);
+//			System.out.println(p.getNumFromID(p.getId()));
+//			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
+//		}
 
-		for (int i = 0; i < testAmount; i++) {
-			cbs.get(i).printFT();
-			cbs.get(i).init();
-			System.out.println(cbs.get(i).chord.getURL() + " has ships at: ");
-			System.out.println(cbs.get(i).player.getAllShips());
-		}
-
-		System.out.println("Players:");
-		for (Player p : cbs.get(0).allPlayers) {
-			System.out.println(p);
-			System.out.println(p.getNumFromID(p.getId()));
-			System.out.println(p.getIDFromNum(p.getNumFromID(p.getId())));
-		}
-
-		cbs.get(0).play();
+//		cbs.get(0).play();
 
 		// standardbroadcasttest(cbs);
 	}
@@ -333,15 +329,19 @@ public class Game implements NotifyCallback {
 		Battleship.bus().post(InitEvent.valueOf(I, allPlayers.size() + 1));
 		System.out.println("Found " + allPlayers + " ENEMIES");
 		Collections.sort(allPlayers);
-		if (allPlayers.get(allPlayers.size() - 1).compareTo(
-				player) < 0) {
+		if(this.player.isMyNode(ID.valueOf(Game.ADDRESS_AMOUNT.subtract(new BigInteger("1")))))
+	//	if(getDaddy( ID.valueOf(Game.ADDRESS_AMOUNT.subtract(new BigInteger("1")))).equals(this.player.getId()))
+//		if (allPlayers.get(allPlayers.size() - 1).compareTo(
+//				player) < 0)
+		{
 			System.out.println("we are the first");
 			prioStrat();
 			
 		} else {
 			System.out.println("we are NOT the first");
 		}
-		lastShooter=allPlayers.get(allPlayers.size()-1);
+		//lastShooter=allPlayers.get(allPlayers.size()-1);
+		lastShooter=getDaddy(ID.valueOf(Game.ADDRESS_AMOUNT.subtract(new BigInteger("1"))));
 	}
 
 	public void randomStrat() {
